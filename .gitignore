@@ -1,0 +1,17 @@
+# Dependencies
+node_modules/
+client/node_modules/
+server/node_modules/
+
+# Environment variables — NEVER push these
+.env
+.env.local
+.env.development.local
+
+# Next.js build output
+client/.next/
+client/out/
+
+# Misc
+.DS_Store
+*.log
