@@ -1,7 +1,17 @@
+import FeaturesSection from "@/components/HomePage/FetureSection";
+import HeroSection from "@/components/HomePage/HeroSection";
+import ResumeUploadSection from "@/components/HomePage/ResumeUploadSection";
+import Stats from "@/components/HomePage/Stats";
+
 export default function Home() {
   return (
-    <main className="flex min-h-screen items-center justify-center">
-      <h1 className="text-3xl font-bold">CareerSync 🚀</h1>
-    </main>
+    <>
+    <HeroSection/>
+    <ResumeUploadSection />
+    <Stats />
+    <FeaturesSection />
+    
+    
+    </>
   );
 }
