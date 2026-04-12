@@ -40,8 +40,8 @@ export default function Navbar() {
           <Link href="/" className="hover:text-black transition">
             Home
           </Link>
-          <Link href="/#features" className="hover:text-black transition">
-            Features
+          <Link href="/analyze" className="hover:text-black transition">
+            ATS Score
           </Link>
           <Link href="/#how" className="hover:text-black transition">
             How it works
