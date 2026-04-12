@@ -1,16 +1,10 @@
+// app/layout.tsx
 import type { Metadata } from "next";
-import { Outfit  } from "next/font/google";
 import "./globals.css";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import { AuthProvider } from "@/context/AuthContext";
 import { GoogleOAuthProvider } from '@react-oauth/google';
-
-const outfit = Outfit({
-  subsets: ["latin"],
-  weight: ["100","200","300","400","500","600","700","800","900"],
-  variable: "--font-outfit",
-});
 
 export const metadata: Metadata = {
   title: "CareerSync - AI-Powered ATS Resume Analyzer",
@@ -23,11 +17,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html
-      lang="en"
-      className={`${outfit.variable} h-full antialiased`}
-    >
-      <body className="min-h-full flex flex-col">
+    <html lang="en">
+      <body className="min-h-full flex flex-col" style={{ fontFamily: 'system-ui, -apple-system, sans-serif' }}>
         <GoogleOAuthProvider clientId={process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || ''}>
           <AuthProvider>
             <Navbar />
