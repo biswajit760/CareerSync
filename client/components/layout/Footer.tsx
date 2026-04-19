@@ -1,78 +1,105 @@
 "use client";
 
-// import { Github, Linkedin, Twitter } from "lucide-react";
+import { FaFacebook, FaGithub, FaInstagram, FaLinkedin } from "react-icons/fa";
+
 
 export default function Footer() {
   return (
-    <footer className="w-full bg-gradient-to-r from-green-50 via-white to-green-50 border-t mt-20">
-      <div className="max-w-6xl mx-auto px-6 py-16">
+    <footer className="w-full bg-gradient-to-r from-[#1c1f26] via-[#15181e] to-[#1c1f26] text-gray-400 mt-20 border-t border-gray-800">
+      <div className="max-w-6xl mx-auto px-6 py-4">
 
-        {/* 🔥 Top Section */}
-        <div className="grid md:grid-cols-4 gap-10">
+        {/* 🔥 Top Grid */}
+        <div className="grid md:grid-cols-5 gap-10">
 
-          {/* Logo + Brand */}
-          <div>
-            <h2 className="text-xl font-bold">
-              Career<span className="text-green-600">Sync</span>
+          {/* Brand */}
+          <div className="space-y-3">
+            <h2 className="text-lg font-semibold text-white">
+              Career<span className="text-green-500">Sync</span>
             </h2>
+            <p className="text-sm leading-relaxed text-gray-500">
+              Helping you improve your resume, identify skill gaps, and land better job opportunities with AI.
+            </p>
+            <p className="text-sm text-gray-500">+91 987654321</p>
+            <p className="text-sm text-gray-500">support@careersync.com</p>
           </div>
 
-          {/* Product */}
+          {/* Menu */}
           <div>
-            <h3 className="font-semibold text-gray-900 mb-4">Product</h3>
-            <ul className="space-y-2 text-gray-600 text-sm">
-              <li className="hover:text-green-600 cursor-pointer">Home</li>
-              <li className="hover:text-green-600 cursor-pointer">Features</li>
-              <li className="hover:text-green-600 cursor-pointer">Dashboard</li>
-              <li className="hover:text-green-600 cursor-pointer">Pricing</li>
+            <h3 className="text-sm font-semibold text-white mb-4">Menu</h3>
+            <ul className="space-y-2 text-sm">
+              {["Home", "Features", "Dashboard", "Pricing"].map((item) => (
+                <li
+                  key={item}
+                  className="hover:text-green-500 cursor-pointer transition"
+                >
+                  {item}
+                </li>
+              ))}
             </ul>
           </div>
 
-          {/* Resources */}
+          {/* More */}
           <div>
-            <h3 className="font-semibold text-gray-900 mb-4">Resources</h3>
-            <ul className="space-y-2 text-gray-600 text-sm">
-              <li className="hover:text-green-600 cursor-pointer">Docs</li>
-              <li className="hover:text-green-600 cursor-pointer">Blog</li>
-              <li className="hover:text-green-600 cursor-pointer">Community</li>
-              <li className="hover:text-green-600 cursor-pointer">
-                Careers{" "}
-                <span className="ml-2 text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded">
-                  Hiring
-                </span>
-              </li>
+            <h3 className="text-sm font-semibold text-white mb-4">More</h3>
+            <ul className="space-y-2 text-sm">
+              {["Docs", "Blog", "FAQs"].map((item) => (
+                <li
+                  key={item}
+                  className="hover:text-green-500 cursor-pointer transition"
+                >
+                  {item}
+                </li>
+              ))}
             </ul>
           </div>
 
-          {/* Legal */}
+          {/* Categories */}
           <div>
-            <h3 className="font-semibold text-gray-900 mb-4">Legal</h3>
-            <ul className="space-y-2 text-gray-600 text-sm">
-              <li className="hover:text-green-600 cursor-pointer">Privacy</li>
-              <li className="hover:text-green-600 cursor-pointer">Terms</li>
+            <h3 className="text-sm font-semibold text-white mb-4">Categories</h3>
+            <ul className="space-y-2 text-sm">
+              {["Resumes", "ATS Reports", "Skill Analysis", "Jobs"].map(
+                (item) => (
+                  <li
+                    key={item}
+                    className="hover:text-green-500 cursor-pointer transition"
+                  >
+                    {item}
+                  </li>
+                )
+              )}
             </ul>
+          </div>
+
+          {/* Social */}
+          <div>
+            <h3 className="text-sm font-semibold text-white mb-4">
+              Social Media
+            </h3>
+            <div className="flex gap-4">
+              {[FaFacebook, FaInstagram, FaLinkedin, FaGithub].map((Icon, i) => (
+                <div
+                  key={i}
+                  className="p-2 rounded-full bg-[#22252d] hover:bg-green-600 transition cursor-pointer"
+                >
+                  <Icon className="w-4 h-4 text-gray-300" />
+                </div>
+              ))}
+            </div>
           </div>
         </div>
 
-        {/* 🔥 Bottom Section */}
-        <div className="mt-12 flex flex-col md:flex-row items-center justify-between gap-6">
+        {/* 🔥 Bottom Bar */}
+        <div className="mt-8 pt-4 border-t border-gray-800 flex flex-col md:flex-row items-center justify-between text-sm text-gray-500 gap-4">
+          <p>© {new Date().getFullYear()} CareerSync. All Rights Reserved.</p>
 
-          {/* Tagline */}
-          <p className="text-gray-600 text-sm text-center md:text-left max-w-md">
-            Helping you improve your resume, identify skill gaps, and land better job opportunities with AI.
-          </p>
-
-          {/* Social Icons */}
-          <div className="flex items-center gap-4 text-gray-500">
-            {/* <Github className="w-5 h-5 hover:text-green-600 cursor-pointer transition" />
-            <Linkedin className="w-5 h-5 hover:text-green-600 cursor-pointer transition" />
-            <Twitter className="w-5 h-5 hover:text-green-600 cursor-pointer transition" /> */}
+          <div className="flex gap-6">
+            <span className="hover:text-green-500 cursor-pointer transition">
+              Terms of Use
+            </span>
+            <span className="hover:text-green-500 cursor-pointer transition">
+              Privacy Policy
+            </span>
           </div>
-        </div>
-
-        {/* Copyright */}
-        <div className="mt-6 text-center text-sm text-gray-400">
-          © {new Date().getFullYear()} CareerSync. All rights reserved.
         </div>
       </div>
     </footer>

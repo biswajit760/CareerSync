@@ -30,3 +30,31 @@
 .animate-marquee-reverse {
   animation: marquee-reverse 35s linear infinite;
 }
+
+.section-label {
+    @apply text-[10px] font-bold uppercase tracking-widest text-slate-500;
+  }
+
+  /* The main title for section cards */
+  .section-title {
+    @apply text-[13px] font-semibold text-slate-800;
+  }
+
+  @layer components {
+  /* Navigation & General Actions */
+  .bg-grad-nav { @apply bg-gradient-to-br from-slate-700 to-slate-900; }
+  .bg-grad-zap { @apply bg-gradient-to-br from-amber-400 to-yellow-500; }
+
+  /* Section Specifics */
+  .bg-grad-summary { @apply bg-gradient-to-br from-sky-400 to-blue-600; }
+  .bg-grad-health { @apply bg-gradient-to-br from-teal-400 to-emerald-600; }
+  .bg-grad-recruiter { @apply bg-gradient-to-br from-violet-500 to-purple-700; }
+  .bg-grad-keyword { @apply bg-gradient-to-br from-indigo-500 to-violet-600; }
+
+  /* Status & Sentiment Indicators */
+  .bg-grad-optimal { @apply bg-gradient-to-br from-emerald-400 to-green-600; }
+  .bg-grad-strengths { @apply bg-gradient-to-br from-emerald-400 to-teal-600; }
+  .bg-grad-warning { @apply bg-gradient-to-br from-amber-400 to-orange-500; }
+  .bg-grad-risks { @apply bg-gradient-to-br from-rose-500 to-red-700; }
+  .bg-grad-gaps { @apply bg-gradient-to-br from-rose-500 to-rose-700; }
+}

@@ -1,10 +1,11 @@
 // app/layout.tsx
 import type { Metadata } from "next";
 import "./globals.css";
-import Navbar from "@/components/layout/Navbar";
+
 import Footer from "@/components/layout/Footer";
 import { AuthProvider } from "@/context/AuthContext";
 import { GoogleOAuthProvider } from '@react-oauth/google';
+import Navbar from "@/components/layout/Navbar";
 
 export const metadata: Metadata = {
   title: "CareerSync - AI-Powered ATS Resume Analyzer",
