@@ -1,7 +1,15 @@
 "use client";
 
-import React from "react";
-import { RadarChart, Radar, PolarAngleAxis, PolarGrid, ResponsiveContainer, PolarRadiusAxis } from "recharts";
+import React, { useMemo } from "react";
+import {
+  RadarChart,
+  Radar,
+  PolarAngleAxis,
+  PolarGrid,
+  ResponsiveContainer,
+  PolarRadiusAxis,
+} from "recharts";
+import { motion } from "framer-motion";
 
 export default function AtsRadarChart({ breakdown }: { breakdown: any }) {
   if (!breakdown) return null;
@@ -14,44 +22,112 @@ export default function AtsRadarChart({ breakdown }: { breakdown: any }) {
     { subject: "Formatting", score: Number(breakdown.formatting ?? 0) },
   ];
 
+  // 🔥 Dynamic Avg Score
+  const avgScore = useMemo(() => {
+    const total = chartData.reduce((acc, item) => acc + item.score, 0);
+    return (total / chartData.length).toFixed(1);
+  }, [breakdown]);
+
   return (
-    <div className="w-full">
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.6 }}
+      className="w-full"
+    >
+      {/* Header */}
       <div className="flex items-center justify-between mb-6">
-        <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Competency Map</h4>
-        <span className="text-[10px] font-bold text-slate-400 bg-slate-50 px-2 py-0.5 rounded">BETA v1.2</span>
+        <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.25em]">
+          Competency Map
+        </h4>
+        <span className="text-[10px] font-bold text-slate-400 bg-slate-50 px-2 py-0.5 rounded">
+          BETA v1.2
+        </span>
       </div>
-      
-      <div className="w-full h-[280px]">
+
+      {/* Chart */}
+      <div className="w-full h-[300px] relative">
         <ResponsiveContainer width="100%" height="100%">
-          <RadarChart cx="50%" cy="50%" outerRadius="75%" data={chartData}>
-            <PolarGrid stroke="#E2E8F0" />
-            <PolarAngleAxis 
-              dataKey="subject" 
-              tick={{ fill: "#94A3B8", fontSize: 10, fontWeight: 700 }} 
+          <RadarChart cx="50%" cy="50%" outerRadius="72%" data={chartData}>
+            
+            {/* Softer Grid */}
+            <PolarGrid stroke="#E2E8F0" strokeOpacity={0.5} />
+
+            {/* Labels */}
+            <PolarAngleAxis
+              dataKey="subject"
+              tick={{
+                fill: "#64748B",
+                fontSize: 11,
+                fontWeight: 600,
+              }}
             />
-            <PolarRadiusAxis domain={[0, 100]} axisLine={false} tick={false} />
+
+            <PolarRadiusAxis domain={[0, 100]} tick={false} axisLine={false} />
+
+            {/* Gradient */}
+            <defs>
+              <linearGradient id="radarGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stopColor="#6366F1" stopOpacity={0.6} />
+                <stop offset="100%" stopColor="#8B5CF6" stopOpacity={0.1} />
+              </linearGradient>
+            </defs>
+
+            {/* Radar */}
             <Radar
               name="ATS Profile"
               dataKey="score"
-              stroke="#0F172A"
-              strokeWidth={2}
-              fill="#334155"
-              fillOpacity={0.1}
+              stroke="#6366F1"
+              strokeWidth={2.5}
+              fill="url(#radarGradient)"
+              fillOpacity={1}
+              dot={{
+                r: 3,
+                fill: "#6366F1",
+                strokeWidth: 0,
+              }}
+              style={{
+                filter: "drop-shadow(0 0 6px rgba(99,102,241,0.35))",
+              }}
             />
           </RadarChart>
         </ResponsiveContainer>
+
+        {/* Center Glow */}
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+          <div className="w-24 h-24 bg-indigo-500/10 blur-2xl rounded-full" />
+        </div>
       </div>
 
-      <div className="mt-4 grid grid-cols-2 gap-2">
-        <div className="p-2 border border-slate-100 rounded bg-slate-50/30">
-          <p className="text-[9px] font-bold text-slate-400 uppercase">Avg Score</p>
-          <p className="text-sm font-bold text-slate-700">68.2</p>
-        </div>
-        <div className="p-2 border border-slate-100 rounded bg-slate-50/30">
-          <p className="text-[9px] font-bold text-slate-400 uppercase">Percentile</p>
-          <p className="text-sm font-bold text-emerald-600">Top 12%</p>
-        </div>
+      {/* Stats */}
+      <div className="mt-5 grid grid-cols-2 gap-3">
+        
+        {/* Avg Score */}
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.3 }}
+          className="p-3 rounded-lg border border-slate-200 bg-gradient-to-br from-slate-50 to-white"
+        >
+          <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">
+            Avg Score
+          </p>
+          <p className="text-lg font-bold text-slate-800">{avgScore}</p>
+        </motion.div>
+
+        {/* Percentile */}
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.4 }}
+          className="p-3 rounded-lg border border-emerald-100 bg-gradient-to-br from-emerald-50 to-white"
+        >
+          <p className="text-[9px] font-bold text-emerald-500 uppercase tracking-widest">
+            Percentile
+          </p>
+          <p className="text-lg font-bold text-emerald-600">Top 12%</p>
+        </motion.div>
       </div>
-    </div>
+    </motion.div>
   );
 }
