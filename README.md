@@ -22,7 +22,7 @@ CareerSync is a **production-ready full-stack SaaS platform** that empowers job 
 | Name | Roll No | Role | GitHub |
 |------|---------|------|--------|
 | Biswajit Mahanty | 2303063 | Full Stack Developer & DevOps | [@biswajit760](https://github.com/biswajit760) |
-| MD Shad Alam | 2303133 | Backend Developer & API Integration | [@mdshad](https://github.com/mdshad) |
+| MD Shad Alam | 2303133 | Backend Developer & API Integration | [@mdshad](https://github.com/mdshad01) |
 
 
 **Faculty Guide:** Prof. Ritesh Kumar Jha, Assistant Professor, Department of Information Technology
