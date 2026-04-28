@@ -35,16 +35,20 @@ const authRoutes = require("./routes/authRoutes");
 app.use("/api/auth", authRoutes);
 
 // 🧠 MAIN ANALYZE ROUTE (🔥 MOST IMPORTANT)
-const analyzeRoutes = require("./routes/analyze.routes");
+const analyzeRoutes = require("./routes/analyze");
 app.use("/api/analyze", analyzeRoutes);
 
 // 📊 ATS REPORT
-const atsRoutes = require("./routes/ats.routes");
+const atsRoutes = require("./routes/ats");
 app.use("/api/ats", atsRoutes);
 
 // 📄 RESUME (history, optional)
 const resumeRoutes = require("./routes/resumeRoutes");
 app.use("/api/resume", resumeRoutes);
+
+// 📊 DASHBOARD
+const dashboardRoutes = require("./routes/dashboard");
+app.use("/api/dashboard", dashboardRoutes);
 
 // ================= SERVER =================
 

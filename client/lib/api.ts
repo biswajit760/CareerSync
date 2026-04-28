@@ -87,3 +87,36 @@ export const tokenManager = {
     }
   },
 };
+
+// Dashboard API calls
+export const dashboardAPI = {
+  // Get recent scans
+  getRecentScans: async (token: string) => {
+    return apiCall('/api/dashboard/recent-scans', {
+      method: 'GET',
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+  },
+
+  // Get comparison data for graph
+  getComparisonData: async (token: string) => {
+    return apiCall('/api/dashboard/comparison-data', {
+      method: 'GET',
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+  },
+
+  // Get dashboard statistics
+  getStats: async (token: string) => {
+    return apiCall('/api/dashboard/stats', {
+      method: 'GET',
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+  },
+};

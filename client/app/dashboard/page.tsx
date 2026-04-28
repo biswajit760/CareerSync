@@ -1,140 +1,234 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
+import { dashboardAPI, tokenManager } from '@/lib/api';
+import StatsCards from '@/components/dashboard/StatsCards';
+import ComparisonChart from '@/components/dashboard/ComparisonChart';
+import RecentScansTable from '@/components/dashboard/RecentScansTable';
+import {
+  Upload,
+  Search,
+} from 'lucide-react';
+import HeroBanner from '@/components/dashboard/HeroBanner';
+
+interface RecentScan {
+  _id: string;
+  atsScore: number;
+  jobTitle: string;
+  companyName: string;
+  fileName: string;
+  createdAt: string;
+  summary: string;
+}
+
+interface ScoreBreakdown {
+  keywordMatch: number;
+  skillsMatch: number;
+  experience: number;
+  projects: number;
+  formatting: number;
+}
+
+interface DashboardData {
+  stats: {
+    totalScans: number;
+    averageScore: number;
+    bestScore: number;
+    latestScore: number;
+    improvement: number;
+    successRate: number;
+  };
+  recentScans: RecentScan[];
+  comparisonData: {
+    labels: string[];
+    overallScores: number[];
+    breakdowns: ScoreBreakdown[];
+    jobTitles: string[];
+    dates: string[];
+  };
+}
 
 export default function DashboardPage() {
   const router = useRouter();
-  const { user, loading, isAuthenticated, logout } = useAuth();
+  const { user, loading, isAuthenticated } = useAuth();
+  const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
+  const [dataLoading, setDataLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!loading && !isAuthenticated) {
-      router.push('/login');
-    }
+    if (!loading && !isAuthenticated) router.push('/login');
   }, [loading, isAuthenticated, router]);
+
+  useEffect(() => {
+    const fetchDashboardData = async () => {
+      if (!isAuthenticated) return;
+      try {
+        setDataLoading(true);
+        const token = tokenManager.get();
+        if (!token) throw new Error('No authentication token found');
+
+        const [statsRes, scansRes, comparisonRes] = await Promise.all([
+          dashboardAPI.getStats(token),
+          dashboardAPI.getRecentScans(token),
+          dashboardAPI.getComparisonData(token),
+        ]);
+
+        setDashboardData({
+          stats: statsRes.data,
+          recentScans: scansRes.data,
+          comparisonData: comparisonRes.data,
+        });
+        setError(null);
+      } catch (err) {
+        console.error('Dashboard data fetch error:', err);
+        setError('Failed to load dashboard data');
+      } finally {
+        setDataLoading(false);
+      }
+    };
+
+    if (isAuthenticated) fetchDashboardData();
+  }, [isAuthenticated]);
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading...</p>
+      <div className="min-h-screen flex items-center justify-center bg-slate-50">
+        <div className="text-center space-y-3">
+          <div className="relative mx-auto w-12 h-12">
+            <div className="animate-spin rounded-full h-12 w-12 border-4 border-slate-200 border-t-emerald-500 absolute inset-0" />
+            <div className="animate-ping rounded-full h-3 w-3 bg-emerald-400 absolute top-0 right-0" />
+          </div>
+          <p className="text-slate-500 text-sm font-medium">Loading your dashboard…</p>
         </div>
       </div>
     );
   }
 
-  if (!user) {
-    return null;
-  }
+  if (!user) return null;
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="bg-white shadow">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
-          <h1 className="text-2xl font-bold text-gray-900">CareerSync Dashboard</h1>
+    <div className="min-h-screen bg-[#f8fafc] py-12">
+
+      <main className="max-w-7xl mx-auto px-6 py-8 space-y-6">
+      
+        {/* ─── Hero Banner ─── */}
+        <HeroBanner
+          userName={user.name}
+          plan={user.plan}
+          scanCount={user.scanCount}
+          scanLimit={user.scanLimit}
+          latestScore={dashboardData?.stats.latestScore ?? 0}
+          improvement={dashboardData?.stats.improvement ?? 0}
+          totalScans={dashboardData?.stats.totalScans ?? 0}
+        />
+
+        {/* ─── Data Section ─── */}
+        {dataLoading ? (
+          <div className="bg-white border border-slate-200 rounded-2xl p-16 flex flex-col items-center gap-4">
+            <div className="relative w-10 h-10">
+              <div className="animate-spin rounded-full h-10 w-10 border-4 border-slate-100 border-t-emerald-500" />
+            </div>
+            <p className="text-slate-500 text-sm">Crunching your data…</p>
+          </div>
+        ) : error ? (
+          <div className="bg-red-50 border border-red-200 rounded-2xl p-10 text-center space-y-3">
+            <p className="text-red-600 font-medium text-sm">{error}</p>
+            <button
+              onClick={() => window.location.reload()}
+              className="px-5 py-2 bg-red-600 text-white text-xs font-semibold rounded-lg hover:bg-red-700 transition-colors"
+            >
+              Retry
+            </button>
+          </div>
+        ) : dashboardData ? (
+          <>
+            {/* Stats Cards */}
+            <StatsCards stats={{ ...dashboardData.stats, scanLimit: user.scanLimit }} />
+
+            {/* Chart */}
+            {dashboardData.stats.totalScans > 0 && (
+              <ComparisonChart data={dashboardData.comparisonData} />
+            )}
+
+            {/* Recent Scans — full width */}
+            <RecentScansTable scans={dashboardData.recentScans} />
+
+            {/* Quick Actions — full width below */}
+             {/* Quick Actions */}
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
+
           <button
-            onClick={logout}
-            className="px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+
+            onClick={() => router.push('/analyze')}
+
+            className="group bg-white border border-slate-200 rounded-3xl p-8 hover:shadow-xl hover:border-emerald-300 transition-all text-left"
+
           >
-            Logout
+
+            <div className="flex items-start gap-4">
+
+              <div className="w-12 h-12 bg-emerald-50 rounded-xl flex items-center justify-center group-hover:bg-emerald-600 transition-colors">
+
+                <Upload className="w-6 h-6 text-emerald-600 group-hover:text-white transition-colors" />
+
+              </div>
+
+              <div className="flex-1">
+
+                <h3 className="text-lg font-semibold text-slate-900 mb-2">Upload Resume</h3>
+
+                <p className="text-sm text-slate-600">
+
+                  Analyze your resume with AI-powered insights and get personalized recommendations.
+
+                </p>
+
+              </div>
+
+            </div>
+
           </button>
-        </div>
-      </header>
 
-      {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Welcome Card */}
-        <div className="bg-white shadow rounded-lg p-6 mb-6">
-          <div className="flex items-center gap-4">
-            <img
-              src={user.profilePicture}
-              alt={user.name}
-              className="w-16 h-16 rounded-full"
-            />
-            <div>
-              <h2 className="text-2xl font-bold text-gray-900">Welcome back, {user.name}!</h2>
-              <p className="text-gray-600">{user.email}</p>
+
+
+          <button
+
+            onClick={() => router.push('/job-match')}
+
+            className="group bg-white border border-slate-200 rounded-3xl p-8 hover:shadow-xl hover:border-blue-300 transition-all text-left"
+
+          >
+
+            <div className="flex items-start gap-4">
+
+              <div className="w-12 h-12 bg-blue-50 rounded-xl flex items-center justify-center group-hover:bg-blue-600 transition-colors">
+
+                <Search className="w-6 h-6 text-blue-600 group-hover:text-white transition-colors" />
+
+              </div>
+
+              <div className="flex-1">
+
+                <h3 className="text-lg font-semibold text-slate-900 mb-2">Find Jobs</h3>
+
+                <p className="text-sm text-slate-600">
+
+                  Discover career opportunities that match your skills and experience.
+
+                </p>
+
+              </div>
+
             </div>
-          </div>
+
+          </button>
+
         </div>
-
-        {/* Stats Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-          {/* Plan Card */}
-          <div className="bg-white shadow rounded-lg p-6">
-            <h3 className="text-sm font-medium text-gray-500 uppercase">Current Plan</h3>
-            <p className="mt-2 text-3xl font-bold text-blue-600 capitalize">{user.plan}</p>
-            <p className="mt-1 text-sm text-gray-600">
-              {user.plan === 'free' ? 'Upgrade to Premium for unlimited scans' : 'Unlimited scans available'}
-            </p>
-          </div>
-
-          {/* Scans Used Card */}
-          <div className="bg-white shadow rounded-lg p-6">
-            <h3 className="text-sm font-medium text-gray-500 uppercase">Scans Used</h3>
-            <p className="mt-2 text-3xl font-bold text-gray-900">
-              {user.scanCount} / {user.plan === 'free' ? user.scanLimit : '∞'}
-            </p>
-            <div className="mt-2 w-full bg-gray-200 rounded-full h-2">
-              <div
-                className="bg-blue-600 h-2 rounded-full"
-                style={{
-                  width: user.plan === 'free' ? `${(user.scanCount / user.scanLimit) * 100}%` : '100%',
-                }}
-              ></div>
-            </div>
-          </div>
-
-          {/* Auth Provider Card */}
-          <div className="bg-white shadow rounded-lg p-6">
-            <h3 className="text-sm font-medium text-gray-500 uppercase">Login Method</h3>
-            <p className="mt-2 text-3xl font-bold text-gray-900 capitalize">{user.authProvider}</p>
-            <p className="mt-1 text-sm text-gray-600">
-              {user.authProvider === 'google' ? 'Signed in with Google' : 'Email & Password'}
-            </p>
-          </div>
-        </div>
-
-        {/* Quick Actions */}
-        <div className="bg-white shadow rounded-lg p-6">
-          <h3 className="text-lg font-medium text-gray-900 mb-4">Quick Actions</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <button className="flex items-center gap-3 p-4 border-2 border-gray-200 rounded-lg hover:border-blue-500 hover:bg-blue-50 transition">
-              <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
-                <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
-                </svg>
-              </div>
-              <div className="text-left">
-                <h4 className="font-medium text-gray-900">Upload Resume</h4>
-                <p className="text-sm text-gray-600">Analyze your resume with AI</p>
-              </div>
-            </button>
-
-            <button className="flex items-center gap-3 p-4 border-2 border-gray-200 rounded-lg hover:border-blue-500 hover:bg-blue-50 transition">
-              <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
-                <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                </svg>
-              </div>
-              <div className="text-left">
-                <h4 className="font-medium text-gray-900">Find Jobs</h4>
-                <p className="text-sm text-gray-600">Search matching opportunities</p>
-              </div>
-            </button>
-          </div>
-        </div>
-
-        {/* User Info (Debug) */}
-        <div className="mt-6 bg-gray-100 rounded-lg p-4">
-          <h3 className="text-sm font-medium text-gray-700 mb-2">User Data (Debug)</h3>
-          <pre className="text-xs text-gray-600 overflow-auto">
-            {JSON.stringify(user, null, 2)}
-          </pre>
-        </div>
+          </>
+        ) : null}
       </main>
     </div>
   );

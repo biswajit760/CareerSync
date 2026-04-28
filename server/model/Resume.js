@@ -22,6 +22,22 @@ const resumeSchema = new mongoose.Schema(
       type: String,
     },
 
+    fileName: {
+      type: String,
+      required: true,
+    },
+
+    scanIdentifier: {
+      type: String,
+      required: true,
+      index: true,
+    },
+
+    scanNumber: {
+      type: Number,
+      default: 1,
+    },
+
   },
   { timestamps: true }
 );
