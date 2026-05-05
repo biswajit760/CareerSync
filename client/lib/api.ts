@@ -1,89 +1,137 @@
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+import toast from "react-hot-toast";
 
-// Helper function to make API calls
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+
+// ================= TOKEN MANAGER =================
+export const tokenManager = {
+  set: (token: string) => {
+    if (typeof window !== "undefined") {
+      localStorage.setItem("token", token);
+    }
+  },
+
+  get: () => {
+    if (typeof window !== "undefined") {
+      return localStorage.getItem("token");
+    }
+    return null;
+  },
+
+  remove: () => {
+    if (typeof window !== "undefined") {
+      localStorage.removeItem("token");
+    }
+  },
+};
+
+// ================= CORE API FUNCTION =================
 async function apiCall(endpoint: string, options: RequestInit = {}) {
   const url = `${API_URL}${endpoint}`;
-  
+  const token = tokenManager.get();
+
   const config: RequestInit = {
     ...options,
     headers: {
-      'Content-Type': 'application/json',
+      "Content-Type": "application/json",
+      ...(token && { Authorization: `Bearer ${token}` }),
       ...options.headers,
     },
   };
 
   try {
     const response = await fetch(url, config);
-    const data = await response.json();
 
+    let data: any;
+    try {
+      data = await response.json();
+    } catch {
+      throw new Error("Invalid server response");
+    }
+
+    // 🔥 Centralized error handling
     if (!response.ok) {
-      throw new Error(data.message || 'Something went wrong');
+      const message = data?.message || "Something went wrong";
+
+      // Prevent duplicate toasts (important)
+      toast.dismiss();
+      toast.error(message);
+
+      const error: any = new Error(message);
+      error.status = response.status;
+      error.data = data;
+
+      throw error;
     }
 
     return data;
-  } catch (error) {
-    if (error instanceof Error) {
-      throw error;
+  } catch (error: any) {
+    console.error("🔥 API ERROR:", error.message);
+
+    const message = error.message || "Network error";
+
+    // Avoid double toast (only show if not already shown)
+    if (!error.status) {
+      toast.dismiss();
+      toast.error(message);
     }
-    throw new Error('Network error');
+
+    throw new Error(message);
   }
 }
 
-// Auth API calls
+// ================= AUTH API =================
 export const authAPI = {
-  // Register new user
-  register: async (name: string, email: string, password: string) => {
-    return apiCall('/api/auth/register', {
-      method: 'POST',
+  register: (name: string, email: string, password: string) =>
+    apiCall("/api/auth/register", {
+      method: "POST",
       body: JSON.stringify({ name, email, password }),
-    });
-  },
+    }),
 
-  // Login user
-  login: async (email: string, password: string) => {
-    return apiCall('/api/auth/login', {
-      method: 'POST',
+  login: (email: string, password: string) =>
+    apiCall("/api/auth/login", {
+      method: "POST",
       body: JSON.stringify({ email, password }),
-    });
-  },
+    }),
 
-  // Google OAuth
-  googleAuth: async (googleId: string, email: string, name: string, profilePicture?: string) => {
-    return apiCall('/api/auth/google', {
-      method: 'POST',
+  googleAuth: (
+    googleId: string,
+    email: string,
+    name: string,
+    profilePicture?: string
+  ) =>
+    apiCall("/api/auth/google", {
+      method: "POST",
       body: JSON.stringify({ googleId, email, name, profilePicture }),
-    });
-  },
+    }),
 
-  // Get current user profile
-  getMe: async (token: string) => {
-    return apiCall('/api/auth/me', {
-      method: 'GET',
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
-  },
+  getMe: () => apiCall("/api/auth/me"),
 };
 
-// Token management
-export const tokenManager = {
-  set: (token: string) => {
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('token', token);
-    }
-  },
+// ================= ATS =================
+export const getUserReports = () => {
+  return apiCall("/api/ats/user");
+};
 
-  get: () => {
-    if (typeof window !== 'undefined') {
-      return localStorage.getItem('token');
-    }
-    return null;
-  },
+// ================= JOB MATCHING =================
+export const jobMatchingAPI = {
+  getPersonalizedJobs: (forceRefresh: boolean = false) =>
+    apiCall(`/api/jobs/recommendations?forceRefresh=${forceRefresh}`),
 
-  remove: () => {
-    if (typeof window !== 'undefined') {
-      localStorage.removeItem('token');
-    }
-  },
+  getUserProfile: () => apiCall("/api/jobs/profile"),
+
+  updateProfilePreferences: (preferences: {
+    preferredRoles?: string[];
+    preferredIndustries?: string[];
+    workModel?: string;
+    companySize?: string;
+  }) =>
+    apiCall("/api/jobs/profile/preferences", {
+      method: "PUT",
+      body: JSON.stringify(preferences),
+    }),
+};
+
+// ================= LEGACY JOB =================
+export const getJobRecommendations = (resumeId: string) => {
+  return apiCall(`/api/jobs/recommendations/${resumeId}`);
 };
