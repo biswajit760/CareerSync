@@ -21,8 +21,15 @@ const resumeSchema = new mongoose.Schema(
     rawText: {
       type: String,
     },
+    extractedProfile: {
+    role: { type: String, default: "Software Developer" },
+    seniority: { type: String, enum: ['Fresher', 'Junior', 'Senior'], default: 'Fresher' },
+    yearsOfExp: { type: Number, default: 0 },
+    skills: [String] // Top 5-10 technical skills
+  },
 
   },
+  
   { timestamps: true }
 );
 
