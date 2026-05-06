@@ -1,9 +1,6 @@
 const Resume = require("../model/Resume");
 const ATSReport = require("../model/AtsReport.model");
-const User = require("../model/User");
 const uploadToCloudinary = require("../utils/uploadToCloudinary");
-const generateResumeHash = require("../utils/generateResumeHash");
-const extractJobInfo = require("../utils/extractJobInfo");
 const pdfParse = require("pdf-parse");
 const { analyzeResumeWithAI } = require("../services/ai.service");
 
@@ -25,35 +22,21 @@ exports.analyzeFullFlow = async (req, res) => {
         message: "Only PDF files are supported",
       });
     }
-
     // 1️⃣ Upload
     const uploadResult = await uploadToCloudinary(file.buffer);
 
     // 2️⃣ Parse
     const parsed = await pdfParse(file.buffer);
 
-    // 3️⃣ Generate resume identifier hash
-    const scanIdentifier = generateResumeHash(parsed.text);
-
-    // 4️⃣ Extract job info from description
-    const { jobTitle, companyName } = extractJobInfo(jobDescription);
-
-    // 5️⃣ Calculate scan number for this user
-    const userScanCount = await Resume.countDocuments({ userId: req.user.id });
-    const scanNumber = userScanCount + 1;
-
-    // 6️⃣ Save Resume
+    // 3️⃣ Save Resume
     const resume = await Resume.create({
       userId: req.user.id,
       cloudinaryUrl: uploadResult.secure_url,
       rawText: parsed.text,
       jobDescription,
-      fileName: file.originalname,
-      scanIdentifier,
-      scanNumber,
     });
 
-    // 7️⃣ AI Analysis
+    // 4️⃣ AI
     const aiResult = await analyzeResumeWithAI(
       parsed.text,
       jobDescription
@@ -63,7 +46,7 @@ exports.analyzeFullFlow = async (req, res) => {
       throw new Error("Invalid AI response");
     }
 
-    // 8️⃣ Save Report
+    // 5️⃣ Save Report
     const report = await ATSReport.create({
       resumeId: resume._id,
       userId: req.user.id,
@@ -80,16 +63,7 @@ exports.analyzeFullFlow = async (req, res) => {
       missingSkills: aiResult.missingSkills || [],
       strengths: aiResult.strengths || [],
       improvements: aiResult.improvements || [],
-      jobTitle,
-      companyName,
-      scanIdentifier,
     });
-
-    // 9️⃣ Increment user scan count
-    const user = await User.findById(req.user.id);
-    if (user) {
-      await user.incrementScanCount();
-    }
 
     res.status(200).json({
       success: true,

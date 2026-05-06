@@ -14,7 +14,6 @@ const atsReportSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
       required: true,
-      index: true,
     },
 
     atsScore: {
@@ -35,22 +34,6 @@ const atsReportSchema = new mongoose.Schema(
     missingSkills: [String],
     strengths: [String],
     improvements: [String],
-
-    jobTitle: {
-      type: String,
-      default: "Untitled Position",
-    },
-
-    companyName: {
-      type: String,
-      default: "",
-    },
-
-    scanIdentifier: {
-      type: String,
-      required: true,
-      index: true,
-    },
 
     modelUsed: {
       type: String,

@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
 
-const { analyzeFullFlow } = require("../controllers/analyze");
+const { analyzeFullFlow } = require("../controllers/analyze.controller");
 const upload = require("../middleware/upload"); // multer
 const auth = require("../middleware/auth"); // your auth middleware
 
