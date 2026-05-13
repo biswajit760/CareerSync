@@ -1,154 +1,205 @@
 const UserJobProfile = require("../model/UserJobProfile");
-const jobCacheService = require("../services/jobCache.service");
-const jobRankingEngine = require("../services/jobRanking.service");
+
+const jobRecommendationService = require(
+  "../services/jobRecommendation.service"
+);
 
 const asyncHandler = require("../utils/asyncHandler");
 const AppError = require("../utils/AppError");
 
 //
-// ================= GET PERSONALIZED JOBS =================
+// ======================================================
+// GET PERSONALIZED JOBS
+// ======================================================
 //
-exports.getPersonalizedJobs = asyncHandler(async (req, res, next) => {
-  const userId = req.user?.id;
-  const { forceRefresh = false } = req.query;
+exports.getPersonalizedJobs = asyncHandler(
+  async (req, res, next) => {
 
-  if (!userId) {
-    return next(new AppError("Unauthorized access", 401));
+    const userId = req.user?.id;
+    const { forceRefresh = false } = req.query;
+
+    if (!userId) {
+      return next(new AppError("Unauthorized access", 401));
+    }
+
+    /**
+     * 1. PROFILE VALIDATION
+     */
+    const profile = await UserJobProfile.findOne({ userId });
+
+    if (!profile) {
+      return next(
+        new AppError("No career profile found. Please analyze a resume first.", 400)
+      );
+    }
+
+    /**
+     * 2. PROFILE COMPLETENESS CHECK
+     */
+    if (profile.profileHealth.completenessScore < 20) {
+      return res.status(200).json({
+        success: true,
+        data: {
+          jobs: [],
+          metadata: {
+            recommendationType: "global-profile",
+            message: "Complete your profile to unlock better recommendations.",
+          },
+          userProfile: {
+            primaryRole: profile.primaryRole,
+            seniority: profile.seniority,
+            profileCompleteness: profile.profileHealth.completenessScore,
+          }
+        }
+      });
+    }
+
+    /**
+     * 3. CENTRALIZED RECOMMENDATION ENGINE
+     */
+    const recommendations = await jobRecommendationService.getRecommendations({
+      userId,
+      forceRefresh: forceRefresh === "true"
+    });
+
+    /**
+     * 4. UPDATE METADATA
+     * Note: Skill normalization is now handled automatically 
+     * by the Model's pre-save hook.
+     */
+    profile.recommendationMetadata = profile.recommendationMetadata || {};
+    profile.recommendationMetadata.lastRecommendationRefresh = new Date();
+    profile.recommendationMetadata.totalJobsViewed = 
+      (profile.recommendationMetadata.totalJobsViewed || 0) + (recommendations.jobs?.length || 0);
+
+    await profile.save();
+
+    /**
+     * 5. RESPONSE
+     */
+    res.status(200).json({
+      success: true,
+      data: {
+        ...recommendations,
+        userProfile: {
+          primaryRole: profile.primaryRole,
+          seniority: profile.seniority,
+          profileCompleteness: profile.profileHealth.completenessScore,
+          dominantRole: recommendations.metadata?.dominantRole,
+          dominantStack: recommendations.metadata?.dominantStack,
+        }
+      }
+    });
   }
+);
 
-  // 1️⃣ Get user profile
-  const profile = await UserJobProfile.findOne({ userId });
+//
+// ======================================================
+// GET USER PROFILE
+// ======================================================
+//
+exports.getUserProfile = asyncHandler(
+  async (req, res, next) => {
 
-  if (!profile) {
-    return next(
-      new AppError(
-        "No career profile found. Please analyze a resume first.",
-        400
-      )
-    );
+    const userId = req.user?.id;
+
+    if (!userId) {
+      return next(
+        new AppError(
+          "Unauthorized access",
+          401
+        )
+      );
+    }
+
+    const profile =
+      await UserJobProfile
+        .findOne({ userId })
+        .lean();
+
+    if (!profile) {
+      return next(
+        new AppError(
+          "No profile found",
+          404
+        )
+      );
+    }
+
+    res.status(200).json({
+      success: true,
+      data: profile,
+    });
   }
+);
 
-  // 2️⃣ Check profile completeness
-  if (profile.profileCompleteness < 30) {
-    return next(
-      new AppError(
-        "Profile is incomplete. Please analyze another resume.",
-        400
-      )
-    );
-  }
+//
+// ======================================================
+// UPDATE PROFILE PREFERENCES
+// ======================================================
+//
+exports.updateProfilePreferences =
+  asyncHandler(async (req, res, next) => {
 
-  const { primaryRole, seniority } = profile;
+    const userId = req.user?.id;
 
-  if (!primaryRole || !seniority) {
-    return next(new AppError("Invalid profile data", 400));
-  }
+    if (!userId) {
+      return next(
+        new AppError(
+          "Unauthorized access",
+          401
+        )
+      );
+    }
 
-  // 3️⃣ Fetch jobs (cache-aware)
-  const jobs = await jobCacheService.getJobsWithCache(
-    primaryRole,
-    seniority,
-    forceRefresh === "true" || forceRefresh === true
-  );
+    const {
+      preferredRoles,
+      preferredIndustries,
+      workModel,
+      companySize,
+    } = req.body;
 
-  if (!jobs || jobs.length === 0) {
-    return next(new AppError("No jobs found for your profile", 404));
-  }
+    const profile =
+      await UserJobProfile
+        .findOneAndUpdate(
+          { userId },
 
-  // 4️⃣ Rank jobs
-  const rankedJobs = jobRankingEngine.rankJobs(profile, jobs);
+          {
+            ...(preferredRoles && {
+              preferredRoles
+            }),
 
-  // 5️⃣ Transform jobs (ensure id)
-  const transformedJobs = rankedJobs.map((job) => ({
-    ...job,
-    id: job._id || job.id || job.jobId,
-  }));
+            ...(preferredIndustries && {
+              preferredIndustries
+            }),
 
-  // 6️⃣ Update profile metadata
-  profile.metadata.lastJobFetch = new Date();
-  profile.metadata.totalJobsViewed += transformedJobs.length;
-  await profile.save();
+            ...(workModel && {
+              workModel
+            }),
 
-  // 7️⃣ Response
-  res.status(200).json({
-    success: true,
-    data: {
-      jobs: transformedJobs,
-      count: transformedJobs.length,
-      userProfile: {
-        primaryRole: profile.primaryRole,
-        seniority: profile.seniority,
-        yearsOfExperience: profile.yearsOfExperience,
-        profileCompleteness: profile.profileCompleteness,
-      },
-      cacheInfo: {
-        isCached: !(forceRefresh === "true" || forceRefresh === true),
-        lastFetched: transformedJobs[0]?.createdAt,
-        expiresAt: transformedJobs[0]?.expiresAt,
-      },
-    },
+            ...(companySize && {
+              companySize
+            }),
+
+            statusFlags: {
+              needsUpdate: false,
+            },
+          },
+
+          { new: true }
+        );
+
+    if (!profile) {
+      return next(
+        new AppError(
+          "Profile not found",
+          404
+        )
+      );
+    }
+
+    res.status(200).json({
+      success: true,
+      data: profile,
+    });
   });
-});
-
-//
-// ================= GET USER PROFILE =================
-//
-exports.getUserProfile = asyncHandler(async (req, res, next) => {
-  const userId = req.user?.id;
-
-  if (!userId) {
-    return next(new AppError("Unauthorized access", 401));
-  }
-
-  const profile = await UserJobProfile.findOne({ userId }).lean();
-
-  if (!profile) {
-    return next(new AppError("No profile found", 404));
-  }
-
-  res.status(200).json({
-    success: true,
-    data: profile,
-  });
-});
-
-//
-// ================= UPDATE PROFILE PREFERENCES =================
-//
-exports.updateProfilePreferences = asyncHandler(async (req, res, next) => {
-  const userId = req.user?.id;
-
-  if (!userId) {
-    return next(new AppError("Unauthorized access", 401));
-  }
-
-  const {
-    preferredRoles,
-    preferredIndustries,
-    workModel,
-    companySize,
-  } = req.body;
-
-  const profile = await UserJobProfile.findOneAndUpdate(
-    { userId },
-    {
-      ...(preferredRoles && { preferredRoles }),
-      ...(preferredIndustries && { preferredIndustries }),
-      ...(workModel && { workModel }),
-      ...(companySize && { companySize }),
-      statusFlags: {
-        needsUpdate: false,
-      },
-    },
-    { new: true }
-  );
-
-  if (!profile) {
-    return next(new AppError("Profile not found", 404));
-  }
-
-  res.status(200).json({
-    success: true,
-    data: profile,
-  });
-});
