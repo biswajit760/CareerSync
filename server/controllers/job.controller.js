@@ -1,65 +1,150 @@
 const Resume = require("../model/Resume");
-const ATSReport = require("../model/AtsReport.model");
-const { fetchJobsFromAdzuna } = require("../services/job.service");
 
-const asyncHandler = require("../utils/asyncHandler");
-const AppError = require("../utils/AppError");
+const asyncHandler =
+  require("../utils/asyncHandler");
 
-/**
- * @desc    Get job recommendations based on analyzed resume profile
- * @route   GET /api/jobs/recommendations/:resumeId
- * @access  Private
- */
-exports.getRecommendedJobs = asyncHandler(async (req, res, next) => {
-  const { resumeId } = req.params;
+const AppError =
+  require("../utils/AppError");
 
-  // 1️⃣ Validate resumeId
-  if (!resumeId) {
-    return next(new AppError("Resume ID is required", 400));
-  }
+const jobRecommendationService =
+  require("../services/jobRecommendation.service");
 
-  // 2️⃣ Fetch Resume
-  const resume = await Resume.findById(resumeId);
+//
+// ======================================================
+// GET RESUME-SPECIFIC RECOMMENDATIONS
+// ======================================================
+//
+exports.getRecommendedJobs =
+  asyncHandler(async (req, res, next) => {
 
-  if (!resume) {
-    return next(new AppError("Resume not found", 404));
-  }
+    const { resumeId } =
+      req.params;
 
-  // 3️⃣ Check if analyzed
-  if (!resume.extractedProfile) {
-    return next(
-      new AppError(
-        "Resume has not been analyzed yet. Please run analysis first.",
-        400
-      )
-    );
-  }
+    const userId =
+      req.user?.id;
 
-  // 4️⃣ Fetch ATS report (optional)
-  const report = await ATSReport.findOne({ resumeId: resume._id });
+    /**
+     * VALIDATION
+     */
+    if (!resumeId) {
+      return next(
+        new AppError(
+          "Resume ID is required",
+          400
+        )
+      );
+    }
 
-  // 5️⃣ Extract role + seniority
-  const { role, seniority } = resume.extractedProfile;
+    if (!userId) {
+      return next(
+        new AppError(
+          "Unauthorized access",
+          401
+        )
+      );
+    }
 
-  if (!role || !seniority) {
-    return next(new AppError("Invalid resume profile data", 400));
-  }
+    /**
+     * VERIFY RESUME EXISTS
+     */
+    const resume =
+      await Resume.findById(resumeId);
 
-  console.log(`🔍 Fetching jobs for: ${role} (${seniority})`);
+    if (!resume) {
+      return next(
+        new AppError(
+          "Resume not found",
+          404
+        )
+      );
+    }
 
-  // 6️⃣ Fetch jobs
-  const jobs = await fetchJobsFromAdzuna(role, seniority);
+    /**
+     * OWNERSHIP CHECK
+     */
+    if (
+      resume.userId.toString()
+      !==
+      userId
+    ) {
+      return next(
+        new AppError(
+          "Forbidden access",
+          403
+        )
+      );
+    }
 
-  // 7️⃣ Safety check
-  if (!jobs || jobs.length === 0) {
-    return next(new AppError("No jobs found for this profile", 404));
-  }
+    /**
+     * PROFILE VALIDATION
+     */
+    if (
+      !resume.extractedProfile
+      &&
+      !resume.extractedIntelligence
+    ) {
+      return next(
+        new AppError(
+          "Resume analysis not found",
+          400
+        )
+      );
+    }
 
-  // 8️⃣ Response
-  res.status(200).json({
-    success: true,
-    count: jobs.length,
-    matchScore: report ? report.atsScore : 85,
-    data: jobs,
-  });
+    /**
+     * CENTRALIZED RECOMMENDATION ENGINE
+     */
+    const recommendations =
+      await jobRecommendationService
+        .getRecommendations({
+
+          userId,
+
+          resumeId,
+
+          forceRefresh:
+            req.query.forceRefresh
+              === "true",
+        });
+
+    /**
+     * RESPONSE
+     */
+    res.status(200).json({
+      success: true,
+
+      data: {
+        ...recommendations,
+
+        resumeContext: {
+          resumeId:
+            resume._id,
+
+          uploadedAt:
+            resume.createdAt,
+
+          role:
+            resume.extractedProfile?.role
+            ||
+            resume.extractedIntelligence
+              ?.role,
+
+          seniority:
+            resume.extractedProfile
+              ?.seniority
+            ||
+            resume.extractedIntelligence
+              ?.seniority,
+
+          skills:
+            resume.extractedProfile
+              ?.skills
+            ||
+            resume.extractedIntelligence
+              ?.skills
+            ||
+            [],
+        }
+      }
+    });
 });

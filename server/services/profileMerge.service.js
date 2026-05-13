@@ -1,81 +1,320 @@
-const UserJobProfile = require('../model/UserJobProfile');
+const UserJobProfile = require("../model/UserJobProfile");
 
 class ProfileMergeService {
 
-  /**
-   * Normalize skill (CRITICAL FIX)
-   * Preserves meaningful symbols: +, #, . and - to keep "C++", "C#", ".NET", "ASP.NET" distinct
-   */
-  _normalizeSkill(skill) {
-    return skill
-      .toLowerCase()
-      .trim()
-      .replace(/\s+/g, '') // normalize whitespace
-      .replace(/[^a-z0-9+#.\-]/g, ""); // keep +, #, ., -
+  constructor() {
+
+    this.stackCategories = {
+
+      mern: [
+        "react",
+        "node",
+        "mongodb",
+        "express",
+        "next.js"
+      ],
+
+      java: [
+        "java",
+        "spring"
+      ],
+
+      python: [
+        "python",
+        "django",
+        "flask"
+      ],
+
+      php: [
+        "php",
+        "laravel"
+      ],
+
+      dotnet: [
+        ".net",
+        "c#",
+        "asp.net"
+      ]
+    };
   }
 
   /**
-   * Add unique role (case-insensitive)
+   * =====================================================
+   * SKILL NORMALIZATION
+   * =====================================================
    */
+
+  _normalizeSkill(skill = "") {
+
+    return String(skill)
+      .toLowerCase()
+      .trim()
+      .replace(/\s+/g, "-")
+      .replace(/[^a-z0-9+#.\-]/g, "");
+  }
+
+  /**
+   * =====================================================
+   * BUILD MODERN SKILL OBJECT
+   * =====================================================
+   */
+
+  _buildSkillObject(skill) {
+
+    const displayName =
+      String(skill).trim();
+
+    const canonical = 
+      this._normalizeSkill(displayName);
+
+    return {
+      displayName,
+      canonical,
+      category: 'other',
+      stack: 'general',
+      proficiencyScore: 50,
+      confidence: 0.8,
+      evidenceCount: 1,
+      yearsUsed: 1,
+      inferred: false,
+      lastSeenAt: new Date(),
+      createdAt: new Date(),
+    };
+  }
+
+  /**
+   * =====================================================
+   * NORMALIZE SKILLS ARRAY
+   * Ensures all required fields are present
+   * =====================================================
+   */
+  normalizeSkillsArray(skills = []) {
+    if (!Array.isArray(skills)) return [];
+
+    return skills
+      .filter(skill => skill) // Remove null/undefined
+      .map(skill => {
+        // If skill is a string, build full object
+        if (typeof skill === 'string') {
+          return this._buildSkillObject(skill);
+        }
+
+        // If skill is an object, ensure all required fields
+        const normalized = {
+          displayName: skill.displayName || skill.name || 'Unknown',
+          canonical: skill.canonical || this._normalizeSkill(skill.displayName || skill.name || ''),
+          category: skill.category || 'other',
+          stack: skill.stack || 'general',
+          proficiencyScore: skill.proficiencyScore ?? 50,
+          confidence: skill.confidence ?? 0.8,
+          evidenceCount: skill.evidenceCount ?? 1,
+          yearsUsed: skill.yearsUsed ?? 1,
+          inferred: skill.inferred ?? false,
+          lastSeenAt: skill.lastSeenAt || new Date(),
+          createdAt: skill.createdAt || new Date(),
+        };
+
+        // Copy optional alias fields if present
+        if (skill.aliases) normalized.aliases = skill.aliases;
+        if (skill.sourceResumes) normalized.sourceResumes = skill.sourceResumes;
+
+        return normalized;
+      });
+  }
+
+  /**
+   * =====================================================
+   * DETECT PRIMARY STACK
+   * =====================================================
+   */
+
+  _detectPrimaryStack(skills = []) {
+
+    const scores = {};
+
+    for (
+      const [stack, keywords]
+      of Object.entries(this.stackCategories)
+    ) {
+
+      scores[stack] = 0;
+
+      for (const skill of skills) {
+
+        const normalized =
+          this._normalizeSkill(skill);
+
+        if (
+          keywords.some(keyword =>
+            normalized.includes(
+              this._normalizeSkill(keyword)
+            )
+          )
+        ) {
+          scores[stack]++;
+        }
+      }
+    }
+
+    const sorted =
+      Object.entries(scores)
+        .sort((a, b) => b[1] - a[1]);
+
+    return sorted[0]?.[1] > 0
+      ? sorted[0][0]
+      : "general";
+  }
+
+  /**
+   * =====================================================
+   * DETERMINE SENIORITY
+   * =====================================================
+   */
+
+  _determineSeniority(years) {
+    // FIX: 0-2 years can be considered Junior/Entry level in most modern tech companies.
+    // This allows people with internships or 1 year of exp to see Junior roles.
+    if (years < 0.5) {
+      return "Fresher";
+    }
+
+    if (years < 3) {
+      return "Junior";
+    }
+
+    if (years < 6) {
+      return "Mid-Level";
+    }
+
+    if (years < 10) {
+      return "Senior";
+    }
+
+    return "Lead";
+  }
+
+  /**
+   * =====================================================
+   * ADD UNIQUE ROLE
+   * =====================================================
+   */
+
   _addUniqueRole(profile, role) {
-    const exists = profile.preferredRoles.some(
-      r => r.toLowerCase() === role.toLowerCase()
-    );
+
+    if (!role) return;
+
+    const exists =
+      (profile.preferredRoles || [])
+        .some(
+          r =>
+            r.toLowerCase()
+            === role.toLowerCase()
+        );
+
     if (!exists) {
       profile.preferredRoles.push(role);
     }
   }
 
   /**
-   * Update or create user profile
+   * =====================================================
+   * UPSERT PROFILE
+   * =====================================================
    */
-  async upsertUserProfile(userId, extractedData, resumeId, confidence = 80) {
+
+  async upsertUserProfile(
+    userId,
+    extractedData,
+    resumeId,
+    confidence = 80
+  ) {
+
     try {
-      let profile = await UserJobProfile.findOne({ userId });
+
+      let profile =
+        await UserJobProfile.findOne({
+          userId
+        });
 
       if (!profile) {
-        profile = await this._createNewProfile(userId, extractedData, resumeId);
-        console.log(`✅ Created new profile for user: ${userId}`);
+
+        profile =
+          await this._createNewProfile(
+            userId,
+            extractedData,
+            resumeId
+          );
+
+        console.log(
+          `✅ Created new profile`
+        );
+
       } else {
-        profile = await this._mergeProfile(profile, extractedData, resumeId, confidence);
-        console.log(`✅ Updated profile for user: ${userId}`);
+
+        profile =
+          await this._mergeProfile(
+            profile,
+            extractedData,
+            resumeId,
+            confidence
+          );
+
+        console.log(
+          `✅ Updated existing profile`
+        );
       }
 
       return profile;
+
     } catch (error) {
-      console.error('❌ ProfileMerge Error:', error);
+
+      console.error(
+        "❌ Profile Merge Error:",
+        error
+      );
+
       throw error;
     }
   }
 
   /**
-   * Create new profile
+   * =====================================================
+   * CREATE NEW PROFILE
+   * =====================================================
    */
-  async _createNewProfile(userId, extractedData, resumeId) {
-    const skills = (extractedData.skills || []).map(skill => ({
-      name: skill,
-      normalized: this._normalizeSkill(skill),
-      proficiency: 'Intermediate',
-      frequency: 'Frequently',
-      lastMentioned: new Date()
-    }));
+
+  async _createNewProfile(
+    userId,
+    extractedData,
+    resumeId
+  ) {
+    const rawSkills = extractedData.skills || [];
+    const normalizedSkills = this.normalizeSkillsArray(rawSkills);
 
     const profile = new UserJobProfile({
       userId,
-      primaryRole: extractedData.role,
+      primaryRole: extractedData.role || "Software Developer",
+      primaryStack: this._detectPrimaryStack(rawSkills),
       seniority: this._determineSeniority(extractedData.yearsOfExp || 0),
       yearsOfExperience: extractedData.yearsOfExp || 0,
-      skills,
-      preferredRoles: [extractedData.role],
+      skills: normalizedSkills,
+      preferredRoles: [extractedData.role || "Software Developer"],
       resumeCount: 1,
       lastResumeAnalysis: new Date(),
+      
+      // FIX: Ensure we initialize health and metadata correctly
+      profileHealth: {
+        completenessScore: 0, // Will be updated by pre-save hook
+        profileStrength: 'Average'
+      },
+
       analysisHistory: [{
         resumeId,
         extractedRole: extractedData.role,
-        matchedSkills: extractedData.skills || [],
-        newSkills: extractedData.skills || [],
+        matchedSkills: rawSkills,
+        newSkills: rawSkills,
         analyzedAt: new Date(),
-        confidence: 100
+        confidence: 80, // Default baseline
       }]
     });
 
@@ -83,107 +322,180 @@ class ProfileMergeService {
   }
 
   /**
-   * Merge profile
+   * =====================================================
+   * MERGE EXISTING PROFILE
+   * =====================================================
    */
-  async _mergeProfile(profile, extractedData, resumeId, confidence = 80) {
 
-    // ✅ ROLE HANDLING WITH CONFIDENCE
-    const rolesMatch =
-      profile.primaryRole.toLowerCase() === extractedData.role.toLowerCase();
+  async _mergeProfile(
+    profile,
+    extractedData,
+    resumeId,
+    confidence = 80
+  ) {
 
-    if (!rolesMatch) {
-      if (confidence > 80) {
-        // High confidence → update primary role
-        profile.primaryRole = extractedData.role;
-      } else {
-        // Low confidence → add to preferred roles
-        this._addUniqueRole(profile, extractedData.role);
-        profile.statusFlags = profile.statusFlags || {};
-        profile.statusFlags.conflictingRoles = true;
-      }
+    /**
+     * ROLE AGGREGATION
+     */
+    this._addUniqueRole(
+      profile,
+      extractedData.role
+    );
+
+    if (confidence >= 85) {
+
+      profile.primaryRole =
+        extractedData.role;
     }
 
-    // ✅ SKILL MERGE WITH NORMALIZATION
+    /**
+     * SKILL MERGING
+     */
     const newSkills = [];
 
-    for (const skill of (extractedData.skills || [])) {
-      const normalized = this._normalizeSkill(skill);
+    for (
+      const rawSkill
+      of (extractedData.skills || [])
+    ) {
 
-      const existingSkill = profile.skills.find(
-        s => s.normalized === normalized
-      );
+      const canonical =
+        this._normalizeSkill(rawSkill);
 
-      if (existingSkill) {
-        existingSkill.frequency = 'Frequently';
-        existingSkill.yearsUsed = (existingSkill.yearsUsed || 1) + 0.5;
-        existingSkill.lastMentioned = new Date();
+      const existing =
+        profile.skills.find(
+          s =>
+            s.canonical === canonical
+        );
+
+      if (existing) {
+
+        existing.lastSeenAt =
+          new Date();
+
       } else {
-        newSkills.push(skill);
-        profile.skills.push({
-          name: skill,
-          normalized,
-          proficiency: 'Intermediate',
-          frequency: 'Frequently',
-          lastMentioned: new Date()
-        });
+
+        newSkills.push(rawSkill);
+
+        // Use normalization function to ensure all required fields
+        const normalizedSkill = 
+          this._buildSkillObject(rawSkill);
+        
+        profile.skills.push(normalizedSkill);
       }
     }
 
-    // ✅ EXPERIENCE UPDATE
-    if ((extractedData.yearsOfExp || 0) > profile.yearsOfExperience) {
-      profile.yearsOfExperience = extractedData.yearsOfExp;
+    /**
+     * EXPERIENCE UPDATE
+     */
+    if (
+      (extractedData.yearsOfExp || 0)
+      >
+      profile.yearsOfExperience
+    ) {
+
+      profile.yearsOfExperience =
+        extractedData.yearsOfExp;
     }
 
-    // ✅ ALWAYS RECALCULATE SENIORITY (FIX)
-    profile.seniority = this._determineSeniority(profile.yearsOfExperience);
+    /**
+     * SENIORITY
+     */
+    profile.seniority =
+      this._determineSeniority(
+        profile.yearsOfExperience
+      );
 
-    // ✅ METADATA
+    /**
+     * STACK
+     */
+    profile.primaryStack =
+      this._detectPrimaryStack(
+        profile.skills.map(
+          s => s.displayName
+        )
+      );
+
+    /**
+     * METADATA
+     */
     profile.resumeCount += 1;
-    profile.lastResumeAnalysis = new Date();
 
+    profile.lastResumeAnalysis =
+      new Date();
+
+    /**
+     * HISTORY
+     */
     profile.analysisHistory.push({
+
       resumeId,
-      extractedRole: extractedData.role,
-      matchedSkills: extractedData.skills || [],
+
+      extractedRole:
+        extractedData.role,
+
+      matchedSkills:
+        extractedData.skills || [],
+
       newSkills,
-      analyzedAt: new Date(),
-      confidence
+
+      analyzedAt:
+        new Date(),
+
+      confidence,
     });
 
-    // Keep last 10
-    if (profile.analysisHistory.length > 10) {
-      profile.analysisHistory = profile.analysisHistory.slice(-10);
+    /**
+     * KEEP ONLY LAST 10
+     */
+    if (
+      profile.analysisHistory.length > 10
+    ) {
+
+      profile.analysisHistory =
+        profile.analysisHistory.slice(-10);
     }
 
     return await profile.save();
   }
 
   /**
-   * Seniority logic
+   * =====================================================
+   * GET OR CREATE PROFILE
+   * =====================================================
    */
-  _determineSeniority(yearsOfExp) {
-    if (yearsOfExp < 1) return 'Fresher';
-    if (yearsOfExp < 3) return 'Junior';
-    if (yearsOfExp < 7) return 'Mid-Level';
-    if (yearsOfExp < 10) return 'Senior';
-    return 'Lead';
-  }
 
-  /**
-   * Get or create default profile
-   */
   async getOrCreateProfile(userId) {
-    let profile = await UserJobProfile.findOne({ userId });
+
+    let profile =
+      await UserJobProfile.findOne({
+        userId
+      });
 
     if (!profile) {
-      profile = new UserJobProfile({
-        userId,
-        primaryRole: 'Software Developer',
-        seniority: 'Fresher',
-        yearsOfExperience: 0,
-        skills: [],
-        preferredRoles: ['Software Developer']
-      });
+
+      profile =
+        new UserJobProfile({
+
+          userId,
+
+          primaryRole:
+            "Software Developer",
+
+          primaryStack:
+            "general",
+
+          seniority:
+            "Fresher",
+
+          yearsOfExperience: 0,
+
+          skills: [],
+
+          preferredRoles: [
+            "Software Developer"
+          ]
+        });
+
       await profile.save();
     }
 
@@ -191,27 +503,62 @@ class ProfileMergeService {
   }
 
   /**
-   * Profile completeness
+   * =====================================================
+   * PROFILE COMPLETENESS
+   * =====================================================
    */
-  async updateProfileCompleteness(profileId) {
-    const profile = await UserJobProfile.findById(profileId);
+
+  async updateProfileCompleteness(
+    profileId
+  ) {
+
+    const profile =
+      await UserJobProfile.findById(
+        profileId
+      );
+
     if (!profile) {
- throw new Error(`Profile not found: ${profileId}`);
- }
+      throw new Error(
+        "Profile not found"
+      );
+    }
 
-    const completenessFactors = {
-      hasRole: profile.primaryRole ? 20 : 0,
-      hasSeniority: profile.seniority ? 20 : 0,
-      hasExperience: profile.yearsOfExperience > 0 ? 20 : 0,
-      hasSkills: profile.skills.length > 0 ? 20 : 0,
-      hasPreferences: profile.preferredIndustries?.length > 0 ? 20 : 0
-    };
+    let score = 0;
 
-    profile.profileCompleteness = Object.values(completenessFactors)
-      .reduce((a, b) => a + b, 0);
+    if (profile.primaryRole) {
+      score += 20;
+    }
+
+    if (profile.seniority) {
+      score += 20;
+    }
+
+    if (
+      profile.yearsOfExperience >= 0
+    ) {
+      score += 20;
+    }
+
+    if (
+      profile.skills &&
+      profile.skills.length > 0
+    ) {
+      score += 20;
+    }
+
+    if (
+      profile.preferredRoles &&
+      profile.preferredRoles.length > 0
+    ) {
+      score += 20;
+    }
+
+    profile.profileCompleteness =
+      score;
 
     return await profile.save();
   }
 }
 
-module.exports = new ProfileMergeService();
+module.exports =
+  new ProfileMergeService();

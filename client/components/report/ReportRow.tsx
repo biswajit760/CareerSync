@@ -74,6 +74,15 @@ export default function ReportRow({ report, index }: any) {
             >
               View Full Report
             </button>
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                router.push(`/job-match/${report.resumeId}`);
+              }}
+              className="flex items-center gap-2 px-4 py-2 text-xs font-bold bg-slate-50 text-slate-700 border border-slate-200 rounded-xl hover:bg-slate-900 hover:text-white hover:border-slate-900 transition-all active:scale-95"
+            >
+              View Job
+            </button>
 
             <button className="p-2 text-slate-400 group-hover:text-slate-600 transition-colors">
               <ChevronDown size={18} className={`transition-transform duration-300 ${open ? "rotate-180" : ""}`} />

@@ -35,18 +35,50 @@ export default function Navbar() {
     <header className="fixed top-0 left-0 right-0 z-50 flex justify-center bg-white/70 backdrop-blur-md border-b border-slate-300/60">
       <div className="w-full max-w-7xl px-4 h-16 flex items-center justify-between">
         
-        {/* LEFT - Logo */}
-        <Link href="/" className="flex items-center gap-2 group transition-opacity hover:opacity-90">
-         
-
-
-<div className="bg-green-600/10 p-2 rounded-xl group-hover:bg-green-600 transition-colors duration-300">
-  <Sparkles size={20} className="text-green-600 group-hover:text-white transition-colors" />
+<Link href="/" className="flex items-center gap-3 group">
+  {/* Icon Mark — Revamped */}
+<div className="relative h-[43px] w-[43px] flex-shrink-0 ">
+  <div
+    className="h-full w-full rounded-[13px] flex items-center justify-center transition-all duration-200 group-hover:scale-[1.06] p-2"
+    style={{
+      background: "linear-gradient(145deg, #22c55e 0%, #16a34a 45%, #15803d 100%)",
+      boxShadow: "0 1px 2px rgba(0,0,0,0.08), 0 4px 12px rgba(34,197,94,0.35), inset 0 1px 0 rgba(255,255,255,0.22)",
+    }}
+  >
+    <img
+      src="/Logo.svg"
+      alt="CareerSync"
+      className="w-6 h-6 object-contain brightness-0 invert group-hover:scale-[1.08] transition-transform duration-200"
+    />
+  </div>
 </div>
-          <span className="text-lg font-bold tracking-tight text-slate-900">
-            Career<span className="text-green-600 font-bold">Sync</span>
-          </span>
-        </Link>
+
+  {/* Wordmark (Kept exactly as requested) */}
+  <div className="flex flex-col leading-none gap-1">
+    <div className="flex items-baseline gap-0">
+      <span
+        className="text-[26px] font-bold tracking-[-0.04em] text-slate-900 leading-none"
+        style={{ fontFeatureSettings: '"kern" 1' }}
+      >
+        Career
+      </span>
+      <span
+        className="text-[26px] font-bold tracking-[-0.04em] text-emerald-600 leading-none"
+        style={{ fontFeatureSettings: '"kern" 1' }}
+      >
+        Sync
+      </span>
+    </div>
+
+    <div className="flex items-center gap-2">
+      <div className="h-px w-full bg-emerald-500/25 group-hover:bg-emerald-500/50 transition-colors duration-300" />
+    </div>
+
+    <span className="text-[9px] uppercase tracking-[0.14em] font-medium text-slate-400 leading-none">
+      Career Intelligence Platform
+    </span>
+  </div>
+</Link>
 
         {/* CENTER - Capsule Nav (Optimized Spacing) */}
         <nav className="hidden md:flex items-center gap-2 px-2 py-1.5 border border-slate-200/50 rounded-md bg-slate-100/40">

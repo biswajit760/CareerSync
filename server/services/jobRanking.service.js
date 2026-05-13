@@ -1,284 +1,733 @@
+/**
+ * CAREERSYNC - ADVANCED RECOMMENDATION RANKING ENGINE
+ * ===================================================
+ *
+ * PHILOSOPHY:
+ * Recommendation systems should RANK,
+ * not REJECT.
+ *
+ * This engine uses:
+ * - probabilistic scoring
+ * - affinity matching
+ * - growth opportunity scoring
+ * - semantic stack relations
+ * - confidence-aware ranking
+ * - recommendation diversification
+ */
+
 class JobRankingEngine {
+
   constructor() {
-    this.skillMap = {
-      react: ["react.js", "reactjs"],
-      js: ["javascript"],
-      node: ["node.js"],
-      mongo: ["mongodb"],
-      express: ["express.js"],
+
+    /**
+     * STACK AFFINITY MAP
+     * Related stacks receive partial scores
+     */
+    this.stackAffinity = {
+
+      mern: {
+        react: 0.95,
+        frontend: 0.88,
+        javascript: 0.92,
+        nextjs: 0.90,
+        node: 0.93,
+      },
+
+      frontend: {
+        react: 0.95,
+        ui: 0.80,
+        javascript: 0.88,
+        nextjs: 0.85,
+      },
+
+      backend: {
+        node: 0.92,
+        api: 0.86,
+        java: 0.70,
+        python: 0.65,
+      },
+
+      python: {
+        django: 0.90,
+        flask: 0.88,
+        ai: 0.80,
+        backend: 0.70,
+      }
     };
 
-    // ✅ NEW: Skill importance weights
-    this.skillWeights = {
-      react: 1.0,
-      node: 1.0,
-      mongodb: 0.9,
-      express: 0.9,
-      javascript: 0.9,
-      html: 0.5,
-      css: 0.5,
-      git: 0.4,
+    /**
+     * SKILL NORMALIZATION
+     */
+    this.skillAliases = {
+
+      react: [
+        "react.js",
+        "reactjs",
+      ],
+
+      node: [
+        "node.js",
+        "nodejs",
+      ],
+
+      js: [
+        "javascript",
+        "ecmascript",
+      ],
+
+      mongo: [
+        "mongodb",
+        "nosql",
+      ],
+
+      ts: [
+        "typescript",
+      ],
     };
-
-    this.roleMap = {
-      "frontend developer": ["react developer", "ui developer", "web developer"],
-      "backend developer": ["node developer", "api developer"],
-      "full stack developer": ["mern developer", "software engineer"],
-    };
-  }
-
-  _normalize(text) {
-    return text.toLowerCase().replace(/[^a-z0-9]/g, "");
-  }
-
-  _expandSkill(skill) {
-    const normalized = skill.toLowerCase();
-    return [normalized, ...(this.skillMap[normalized] || [])];
   }
 
   /**
-   * 🧠 ELIGIBILITY FILTER
+   * ====================================================
+   * MAIN RANKING ENTRY
+   * ====================================================
    */
-  _isEligible(userProfile, job) {
-    const jobText = ((job.description || "") + " " + (job.title || "")).toLowerCase();
-    const userExp = userProfile.yearsOfExperience || 0;
 
-    const { min } = this._parseExperienceRange(jobText);
+  rankJobs(userProfile, jobs = []) {
 
-    if (userExp === 0 && min >= 3) return false;
-
-    if (
-      userExp === 0 &&
-      (jobText.includes("senior") ||
-        jobText.includes("lead") ||
-        jobText.includes("expert"))
-    ) {
-      return false;
+    // Validation: ensure profile has required fields
+    if (!userProfile) {
+      console.warn('⚠️ JobRankingEngine: Missing user profile');
+      return [];
+    }
+    
+    if (!Array.isArray(jobs) || !jobs.length) {
+      return [];
+    }
+    
+    // Ensure profile has minimum required structure
+    if (!userProfile.primaryRole) {
+      userProfile.primaryRole = 'software developer';
+    }
+    if (!userProfile.primaryStack) {
+      userProfile.primaryStack = 'general';
     }
 
-    return true;
-  }
+    const ranked = jobs.map(job => {
 
-  /**
-   * 🧠 NEW: EXPERIENCE PARSING (REAL-WORLD READY)
-   */
-  _parseExperienceRange(jobText) {
-    const text = jobText.toLowerCase();
+      const scoring =
+        this._calculateCompositeScore(
+          userProfile,
+          job
+        );
 
-    if (text.includes("fresher") || text.includes("0-1 year")) {
-      return { min: 0, max: 1 };
-    }
-
-    const rangeMatch = text.match(/(\d+)\s*-\s*(\d+)\s*(years?|yrs?)/);
-    if (rangeMatch) {
       return {
-        min: parseInt(rangeMatch[1]),
-        max: parseInt(rangeMatch[2]),
-      };
-    }
+        ...job,
 
-    const singleMatch = text.match(/(?:minimum\s*)?(\d+)\+?\s*(years?|yrs?)/);
-    if (singleMatch) {
-      return {
-        min: parseInt(singleMatch[1]),
-        max: parseInt(singleMatch[1]) + 2,
-      };
-    }
+        matchScore:
+          scoring.totalScore,
 
-    return { min: 0, max: 2 };
+        matchLabel:
+          this._getMatchLabel(
+            scoring.totalScore
+          ),
+
+        scoreBreakdown:
+          scoring.breakdown,
+
+        recommendationMeta: {
+
+          confidence:
+            scoring.confidence,
+
+          recommendationTier:
+            scoring.tier,
+
+          growthPotential:
+            scoring.growthPotential,
+
+          stackAffinity:
+            scoring.stackAffinity,
+        }
+      };
+    });
+
+    /**
+     * SORT DESCENDING
+     */
+    return ranked.sort(
+      (a, b) =>
+        b.matchScore - a.matchScore
+    );
   }
 
   /**
-   * MAIN SCORE CALCULATION
+   * ====================================================
+   * COMPOSITE SCORE
+   * ====================================================
    */
-  calculateMatchScore(userProfile, job) {
-    const scores = {
-      roleMatch: this._calculateRoleMatch(userProfile, job),
-      skillsMatch: this._calculateSkillsMatch(userProfile, job),
-      experienceMatch: this._calculateExperienceMatch(userProfile, job),
-      seniorityMatch: this._calculateSeniorityMatch(userProfile, job),
-      industryMatch: this._calculateIndustryMatch(userProfile, job),
-    };
 
-    let weights = {
-      roleMatch: 0.30,
-      skillsMatch: 0.35, // increased importance
-      experienceMatch: 0.15,
-      seniorityMatch: 0.10,
-      industryMatch: 0.10,
-    };
-
-    if ((userProfile.yearsOfExperience || 0) === 0) {
-      weights = {
-        roleMatch: 0.30,
-        skillsMatch: 0.40,
-        experienceMatch: 0.10,
-        seniorityMatch: 0.10,
-        industryMatch: 0.10,
+  _calculateCompositeScore(
+    profile,
+    job
+  ) {
+    
+    // Safety: validate inputs
+    if (!profile || !job) {
+      return {
+        totalScore: 50,
+        breakdown: {
+          roleAlignment: 50,
+          skillAlignment: 50,
+          stackAffinity: 50,
+          experienceAlignment: 50,
+          seniorityAlignment: 50,
+          growthPotential: 50,
+          freshness: 50,
+        },
+        confidence: 0.5,
+        tier: 'exploration',
+        growthPotential: 50,
+        stackAffinity: 50,
       };
     }
 
-    let totalScore = 0;
-    for (const key in weights) {
-      totalScore += (scores[key] || 0) * weights[key];
+    const breakdown = {
+
+      roleAlignment:
+        this._scoreRoleAlignment(
+          profile,
+          job
+        ),
+
+      skillAlignment:
+        this._scoreSkillAlignment(
+          profile,
+          job
+        ),
+
+      stackAffinity:
+        this._scoreStackAffinity(
+          profile,
+          job
+        ),
+
+      experienceAlignment:
+        this._scoreExperienceAlignment(
+          profile,
+          job
+        ),
+
+      seniorityAlignment:
+        this._scoreSeniorityAlignment(
+          profile,
+          job
+        ),
+
+      growthPotential:
+        this._scoreGrowthPotential(
+          profile,
+          job
+        ),
+
+      freshness:
+        this._scoreFreshness(job),
+    };
+
+    /**
+     * WEIGHTED SCORING
+     */
+    const weights = {
+
+      roleAlignment: 0.25,
+
+      skillAlignment: 0.24,
+
+      stackAffinity: 0.18,
+
+      experienceAlignment: 0.12,
+
+      seniorityAlignment: 0.10,
+
+      growthPotential: 0.06,
+
+      freshness: 0.05,
+    };
+
+    let total = 0;
+
+    Object.keys(weights).forEach(key => {
+      
+      const score = breakdown[key];
+      if (typeof score !== 'number' || isNaN(score)) {
+        total += 50 * weights[key];
+      } else {
+        total += score * weights[key];
+      }
+    });
+
+    // Ensure total is a valid number
+    if (typeof total !== 'number' || isNaN(total)) {
+      total = 50;
     }
 
-    if (totalScore > 70) totalScore += 5;
-    if (totalScore > 85) totalScore += 3;
-
-    totalScore = Math.min(100, totalScore);
+    total =
+      Math.max(
+        35,
+        Math.min(98, total)
+      );
 
     return {
-      score: Math.round(totalScore),
-      breakdown: scores,
+
+      totalScore:
+        Math.round(total),
+
+      breakdown,
+
+      confidence:
+        this._calculateConfidence(
+          breakdown
+        ),
+
+      tier:
+        this._getRecommendationTier(
+          total
+        ),
+
+      growthPotential:
+        breakdown.growthPotential,
+
+      stackAffinity:
+        breakdown.stackAffinity,
     };
   }
 
   /**
-   * ROLE MATCH
+   * ====================================================
+   * ROLE ALIGNMENT
+   * ====================================================
    */
-  _calculateRoleMatch(profile, job) {
-    const jobTitle = (job.title || "").toLowerCase();
-    const userRole = (profile.primaryRole || "developer").toLowerCase();
 
-    if (jobTitle.includes(userRole)) return 100;
+  _scoreRoleAlignment(
+    profile,
+    job
+  ) {
 
-    for (const [main, variants] of Object.entries(this.roleMap)) {
-      if (
-        userRole.includes(main) &&
-        variants.some((v) => jobTitle.includes(v))
-      ) {
-        return 90;
+    const userRole =
+      (
+        profile.primaryRole || ""
+      ).toLowerCase();
+
+    const jobTitle =
+      (
+        job.title || ""
+      ).toLowerCase();
+
+    if (!userRole) return 50;
+
+    if (jobTitle.includes(userRole)) {
+      return 100;
+    }
+
+    const userWords =
+      userRole
+        .split(" ")
+        .filter(w => w.length > 2);
+
+    if (userWords.length === 0) return 50;
+
+    let matches = 0;
+
+    userWords.forEach(word => {
+
+      if (jobTitle.includes(word)) {
+        matches++;
       }
-    }
+    });
 
-    const keywords = userRole.split(" ");
-    const matchCount = keywords.filter((kw) => jobTitle.includes(kw)).length;
-
-    return (matchCount / keywords.length) * 100;
-  }
-
-  /**
-   * 🔥 UPDATED: SKILLS MATCH WITH WEIGHTING
-   */
-  _calculateSkillsMatch(profile, job) {
-    const jobText = this._normalize(
-      (job.description || "") + " " + (job.title || "")
+    const score = Math.round(
+      (matches / userWords.length)
+      * 100
     );
-
-    const profileSkills = (profile.skills || []).map((s) =>
-      s.name.toLowerCase()
-    );
-
-    if (profileSkills.length === 0) return 50;
-
-    let totalWeight = 0;
-    let matchedWeight = 0;
-
-    for (const skill of profileSkills) {
-      const variants = this._expandSkill(skill);
-      const weight = this.skillWeights[skill] || 0.6;
-
-      totalWeight += weight;
-
-      if (
-        variants.some((variant) =>
-          jobText.includes(this._normalize(variant))
-        )
-      ) {
-        matchedWeight += weight;
-      }
-    }
-
-    return (matchedWeight / totalWeight) * 100;
+    
+    return Math.max(0, Math.min(100, score));
   }
 
   /**
-   * 🔥 UPDATED: EXPERIENCE MATCH WITH RANGE
+   * ====================================================
+   * SKILL ALIGNMENT
+   * ====================================================
    */
-  _calculateExperienceMatch(profile, job) {
-    const jobText = ((job.description || "") + " " + (job.title || "")).toLowerCase();
-
-    const { min, max } = this._parseExperienceRange(jobText);
-    const userExp = profile.yearsOfExperience || 0;
-
-    if (userExp >= min && userExp <= max) return 100;
-
-    if (userExp < min) {
-      return (userExp / Math.max(min, 1)) * 100;
-    }
-
-    if (userExp > max) return 85;
-
-    return 70;
-  }
 
   /**
-   * SENIORITY MATCH
+   * ====================================================
+   * SKILL ALIGNMENT
+   * ====================================================
    */
-  _calculateSeniorityMatch(profile, job) {
-    const jobText = ((job.description || "") + " " + (job.title || "")).toLowerCase();
-
-    const levels = {
-      intern: 10,
-      fresher: 20,
-      junior: 40,
-      mid: 60,
-      senior: 80,
-      lead: 100,
-    };
-
-    const userLevel =
-      levels[(profile.seniority || "junior").toLowerCase()] || 50;
-
-    for (const [level, score] of Object.entries(levels)) {
-      if (jobText.includes(level)) {
-        if (userLevel >= score) return 100;
-        return (userLevel / score) * 100;
-      }
-    }
-
-    return 70;
-  }
-
-  /**
-   * INDUSTRY MATCH
-   */
-  _calculateIndustryMatch(profile, job) {
-    if (!profile.preferredIndustries?.length) return 60;
-
-    const jobText = ((job.description || "") + " " + (job.company || "")).toLowerCase();
-
-    const matches = profile.preferredIndustries.filter((ind) =>
-      jobText.includes(ind.toLowerCase())
-    ).length;
-
-    return (matches / profile.preferredIndustries.length) * 100;
-  }
-
-  /**
-   * 🚀 FILTER + RANK
-   */
-  rankJobs(userProfile, jobs) {
-    if (!jobs || jobs.length === 0) return [];
-
-    const filteredJobs = jobs.filter((job) =>
-      this._isEligible(userProfile, job)
-    );
-
-    const finalJobs = filteredJobs.length > 0 ? filteredJobs : jobs;
-
-    return finalJobs
-      .map((job) => {
-        const result = this.calculateMatchScore(userProfile, job);
-        return {
-          ...job,
-          matchScore: result.score,
-          scoreBreakdown: result.breakdown,
-        };
+  
+  _scoreSkillAlignment(profile, job) {
+    // 1. Extract and normalize user skills
+    const userSkills = (profile.skills || [])
+      .map(skill => {
+        if (typeof skill === "string") return skill.toLowerCase();
+        if (typeof skill === "object" && skill !== null) {
+          return (skill.displayName || skill.canonical || skill.name || "").toLowerCase();
+        }
+        return "";
       })
-      .sort((a, b) => b.matchScore - a.matchScore);
+      .filter(Boolean);
+
+    // 2. Identify what the job actually requires
+    // This is extracted from the description in job.service.js
+    const jobRequirements = job.requirements || [];
+
+    // If the user has no skills, give a baseline exploratory score
+    if (!userSkills.length) return 35;
+
+    // If the job didn't list specific requirements, provide a neutral passing score
+    if (jobRequirements.length === 0) return 75;
+
+    let matchedCount = 0;
+    
+    // Check how many of the JOB'S requirements the user meets
+    jobRequirements.forEach(req => {
+      const normalizedReq = req.toLowerCase();
+      
+      // Check for direct match or alias match
+      if (userSkills.includes(normalizedReq) || this._skillExists(normalizedReq, userSkills.join(' '))) {
+        matchedCount++;
+      }
+    });
+
+    /**
+     * FIX: The "Efficiency Score"
+     * Logic: What % of the JOB requirements does this person fulfill?
+     * This ensures a MERN developer with 50 skills isn't "diluted" when 
+     * applying for a job that only needs React and Node.
+     */
+    const matchPercentage = (matchedCount / jobRequirements.length) * 100;
+
+    // Apply a realistic ceiling and floor
+    // Even with a 100% skill match, we leave room for other factors (experience, seniority)
+    return Math.round(Math.min(98, Math.max(0, matchPercentage)));
+  }
+
+  /**
+   * ====================================================
+   * STACK AFFINITY
+   * ====================================================
+   */
+
+  _scoreStackAffinity(
+    profile,
+    job
+  ) {
+
+    const userStack =
+      (
+        profile.primaryStack
+        ||
+        "general"
+      ).toLowerCase();
+
+    const jobText =
+      `${job.title} ${job.description}`
+        .toLowerCase();
+
+    const affinities =
+      this.stackAffinity[userStack];
+
+    if (!affinities) {
+      return 65;
+    }
+
+    let highest = 50;
+
+    Object.entries(affinities)
+      .forEach(([tech, value]) => {
+
+        if (jobText.includes(tech)) {
+
+          highest =
+            Math.max(
+              highest,
+              value * 100
+            );
+        }
+      });
+
+    return Math.round(highest);
+  }
+
+  /**
+   * ====================================================
+   * EXPERIENCE ALIGNMENT
+   * ====================================================
+   */
+
+  _scoreExperienceAlignment(
+    profile,
+    job
+  ) {
+
+    const userExp =
+      profile.yearsOfExperience || 0;
+
+    const jobText =
+      `${job.title} ${job.description}`
+        .toLowerCase();
+
+    const extracted =
+      this._extractExperience(jobText);
+
+    if (!extracted) {
+      return 70;
+    }
+
+    const diff =
+      Math.abs(userExp - extracted);
+
+    if (diff === 0) return 100;
+    if (diff <= 1) return 90;
+    if (diff <= 2) return 80;
+    if (diff <= 4) return 65;
+
+    return 50;
+  }
+
+  /**
+   * ====================================================
+   * SENIORITY ALIGNMENT
+   * ====================================================
+   */
+
+  _scoreSeniorityAlignment(
+    profile,
+    job
+  ) {
+    
+    if (!profile.seniority || typeof profile.seniority !== 'string' || !job.title || !job.description) {
+      return 70;
+    }
+
+    const seniority =
+      profile.seniority.toLowerCase();
+    const jobText =
+      `${job.title} ${job.description}`
+        .toLowerCase();
+
+    // Misalignment: user is fresher but job requires senior
+    if (
+      seniority.includes("fresher")
+      &&
+      (jobText.includes("senior") || jobText.includes("10+ years"))
+    ) {
+      return 35;
+    }
+
+    // Misalignment: user is junior but job requires lead/director
+    if (
+      seniority.includes("junior")
+      &&
+      (jobText.includes("lead") || jobText.includes("director") || jobText.includes("principal"))
+    ) {
+      return 40;
+    }
+
+    return 80;
+  }
+
+  /**
+   * ====================================================
+   * GROWTH POTENTIAL
+   * ====================================================
+   */
+
+  _scoreGrowthPotential(
+    profile,
+    job
+  ) {
+
+    const score =
+      this._scoreExperienceAlignment(
+        profile,
+        job
+      );
+
+    /**
+     * Slightly above user level
+     * = growth opportunity
+     */
+    if (
+      score >= 70
+      &&
+      score <= 85
+    ) {
+      return 95;
+    }
+
+    return 70;
+  }
+
+  /**
+   * ====================================================
+   * FRESHNESS
+   * ====================================================
+   */
+
+  _scoreFreshness(job) {
+
+    if (!job.postedDate) {
+      return 65;
+    }
+
+    const age =
+      (
+        Date.now()
+        -
+        new Date(job.postedDate)
+      )
+      /
+      (1000 * 60 * 60 * 24);
+
+    if (age <= 2) return 100;
+    if (age <= 7) return 90;
+    if (age <= 14) return 75;
+    if (age <= 30) return 60;
+
+    return 45;
+  }
+
+  /**
+   * ====================================================
+   * CONFIDENCE
+   * ====================================================
+   */
+
+  _calculateConfidence(
+    breakdown
+  ) {
+
+    if (!breakdown || typeof breakdown !== 'object') {
+      return 0.5;
+    }
+
+    const values = Object.values(breakdown)
+      .filter(v => typeof v === 'number' && !isNaN(v));
+    
+    if (values.length === 0) {
+      return 0.5;
+    }
+
+    const avg =
+      values.reduce((a, b) => a + b, 0)
+      /
+      values.length;
+
+    const confidence = Number(
+      (avg / 100)
+        .toFixed(2)
+    );
+    
+    return Math.max(0, Math.min(1, confidence));
+  }
+
+  /**
+   * ====================================================
+   * RECOMMENDATION TIER
+   * ====================================================
+   */
+
+  _getRecommendationTier(
+    score
+  ) {
+
+    if (score >= 90) {
+      return "elite";
+    }
+
+    if (score >= 80) {
+      return "strong";
+    }
+
+    if (score >= 65) {
+      return "growth";
+    }
+
+    return "exploration";
+  }
+
+  /**
+   * ====================================================
+   * LABEL
+   * ====================================================
+   */
+
+  _getMatchLabel(score) {
+
+    if (score >= 90) {
+      return "Excellent Match";
+    }
+
+    if (score >= 80) {
+      return "Strong Match";
+    }
+
+    if (score >= 65) {
+      return "Growth Opportunity";
+    }
+
+    return "Exploratory Match";
+  }
+
+  /**
+   * ====================================================
+   * SKILL EXISTS
+   * ====================================================
+   */
+
+  _skillExists(
+    skill,
+    text
+  ) {
+
+    const aliases =
+      this.skillAliases[skill]
+      || [];
+
+    return (
+      text.includes(skill)
+      ||
+      aliases.some(alias =>
+        text.includes(alias)
+      )
+    );
+  }
+
+  /**
+   * ====================================================
+   * EXPERIENCE EXTRACTION
+   * ====================================================
+   */
+
+  _extractExperience(text) {
+
+    if (!text || typeof text !== 'string') {
+      return null;
+    }
+
+    const match =
+      text.match(
+        /(\d+)\+?\s*(years|yrs|year|yr)/i
+      );
+
+    if (!match) {
+      return null;
+    }
+
+    const years = parseInt(match[1]);
+    return isNaN(years) ? null : years;
   }
 }
 
-module.exports = new JobRankingEngine();
+module.exports =
+  new JobRankingEngine();

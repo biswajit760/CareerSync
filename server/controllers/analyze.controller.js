@@ -37,6 +37,7 @@ exports.analyzeFullFlow = asyncHandler(async (req, res, next) => {
   // 4️⃣ Save Resume
   const resume = await Resume.create({
     userId: req.user.id,
+    originalFileName: file.originalname || 'resume.pdf',
     cloudinaryUrl: uploadResult.secure_url,
     rawText: parsed.text,
     jobDescription,

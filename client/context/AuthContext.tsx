@@ -33,7 +33,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
 
       try {
-        const response = await authAPI.getMe(token);
+        const response = await authAPI.getMe();
         setUser(response.user);
       } catch (error) {
         console.error('Failed to fetch user:', error);
