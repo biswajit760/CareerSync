@@ -193,14 +193,14 @@ export default function JobMatchPage() {
       animate={{ opacity: 1 }}
       className="min-h-screen bg-[#fcfcfd] overflow-x-hidden"
     >
-      <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-xl border-b border-slate-200/60">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-5 space-y-5 overflow-hidden">
+      <header className="sticky top-16 z-40 bg-white/95 backdrop-blur-xl border-b border-slate-200/60">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-5 space-y-6 overflow-hidden">
           <div className="text-center space-y-2">
-            <h1 className="text-3xl md:text-5xl font-black tracking-tight text-slate-900">
+            <h1 className="text-3xl md:text-4xl font-medium font-black tracking-tight text-slate-900">
               AI-Powered Job Match
             </h1>
 
-            <p className="max-w-2xl mx-auto text-sm md:text-base text-slate-500">
+            <p className="max-w-2xl mx-auto text-ex  text-slate-500">
               Personalized matches ranked by your specific skill alignment.
             </p>
           </div>
