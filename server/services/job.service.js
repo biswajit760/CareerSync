@@ -127,9 +127,7 @@ exports.fetchJobsFromAdzuna =
             )
             .filter(Boolean);
 
-        console.log(
-          `✅ ${normalized.length} jobs fetched`
-        );
+        
 
         return normalized;
 
@@ -150,9 +148,7 @@ exports.fetchJobsFromAdzuna =
             RETRY_DELAY *
             Math.pow(2, attempt);
 
-          console.log(
-            `⏳ Retrying in ${delay}ms`
-          );
+          
 
           await sleep(delay);
         }
