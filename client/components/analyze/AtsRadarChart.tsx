@@ -16,9 +16,9 @@ export default function AtsRadarChart({ breakdown }: { breakdown: any }) {
 
   const chartData = [
     { subject: "Keywords", score: Number(breakdown.keywordMatch ?? 0) },
-    { subject: "Skills", score: Number(breakdown.skillsMatch ?? 0) },
-    { subject: "Experience", score: Number(breakdown.experience ?? 0) },
-    { subject: "Projects", score: Number(breakdown.projects ?? 0) },
+    { subject: "Skills", score: Number(breakdown.technicalSkills ?? breakdown.skillsMatch ?? 0) },
+    { subject: "Experience", score: Number(breakdown.experienceStrength ?? breakdown.experience ?? 0) },
+    { subject: "Projects", score: Number(breakdown.projectQuality ?? breakdown.projects ?? 0) },
     { subject: "Formatting", score: Number(breakdown.formatting ?? 0) },
   ];
 

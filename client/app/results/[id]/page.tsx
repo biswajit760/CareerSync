@@ -116,7 +116,7 @@ export default function ResultPage() {
 
           <AnalysisHeader 
             atsScore={data.atsScore} 
-            skillsMatch={data.scoreBreakdown?.skillsMatch || 0}
+            skillsMatch={data.scoreBreakdown?.technicalSkills || 0}
             keywordMatch={data.scoreBreakdown?.keywordMatch || 0}
           />
         </section>
@@ -126,7 +126,7 @@ export default function ResultPage() {
           
           {/* LEFT */}
           <div className="space-y-6 lg:col-span-8">
-            <ExecutiveSummary content={data.summary} />
+            <ExecutiveSummary content={data.executiveSummary} />
 
             <StructuralHealth 
               missingCount={data.missingSkills?.length || 0} 

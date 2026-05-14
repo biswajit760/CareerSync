@@ -53,12 +53,12 @@ export default function ReportRow({ report, index }: any) {
           <div className="hidden md:block w-48">
             <div className="flex justify-between text-[11px] font-bold text-slate-400 mb-2">
               <span className="uppercase tracking-tight">Skills Match</span>
-              <span className="text-slate-600">{report.scoreBreakdown?.skillsMatch || 0}%</span>
+              <span className="text-slate-600">{report.scoreBreakdown?.technicalSkills || 0}%</span>
             </div>
             <div className="h-1.5 bg-slate-100 rounded-full overflow-hidden">
               <motion.div
                 initial={{ width: 0 }}
-                animate={{ width: `${report.scoreBreakdown?.skillsMatch || 0}%` }}
+                animate={{ width: `${report.scoreBreakdown?.technicalSkills || 0}%` }}
                 className="h-full bg-indigo-500 rounded-full"
               />
             </div>

@@ -55,23 +55,55 @@ exports.analyzeFullFlow = asyncHandler(async (req, res, next) => {
     extractedProfile: aiResult.extractedProfile,
   });
 
-  // 6️⃣ Save ATS Report
+  // 6️⃣ Calculate ATS Grade based on score
+  const calculateAtsGrade = (score) => {
+    if (score >= 80) return 'Excellent';
+    if (score >= 60) return 'Good';
+    if (score >= 40) return 'Average';
+    return 'Poor';
+  };
+
+  const atsScore = aiResult.atsReport.score ?? 0;
+  const atsGrade = calculateAtsGrade(atsScore);
+
+  // 6.5️⃣ Save ATS Report (FIXED: field names & alignment)
   const report = await ATSReport.create({
     resumeId: resume._id,
     userId: req.user.id,
-    atsScore: aiResult.atsReport.score ?? 0,
+    atsScore: atsScore,
+    atsGrade: atsGrade,
     scoreBreakdown: {
       keywordMatch: aiResult.atsReport.breakdown?.keywordMatch || 0,
-      skillsMatch: aiResult.atsReport.breakdown?.skillsMatch || 0,
-      experience: aiResult.atsReport.breakdown?.experience || 0,
-      projects: aiResult.atsReport.breakdown?.projects || 0,
+      technicalSkills: aiResult.atsReport.breakdown?.technicalSkills || aiResult.atsReport.breakdown?.skillsMatch || 0,
+      experienceStrength: aiResult.atsReport.breakdown?.experienceStrength || aiResult.atsReport.breakdown?.experience || 0,
+      projectQuality: aiResult.atsReport.breakdown?.projectQuality || aiResult.atsReport.breakdown?.projects || 0,
       formatting: aiResult.atsReport.breakdown?.formatting || 0,
+      readability: aiResult.atsReport.breakdown?.readability || 0,
+      leadershipSignals: aiResult.atsReport.breakdown?.leadershipSignals || 0,
+      impactStatements: aiResult.atsReport.breakdown?.impactStatements || 0,
     },
-    summary: aiResult.atsReport.summary || "",
-    matchedSkills: aiResult.atsReport.matchedSkills || [],
-    missingSkills: aiResult.atsReport.missingSkills || [],
-    strengths: aiResult.atsReport.strengths || [],
-    improvements: aiResult.atsReport.improvements || [],
+    matchedSkills: Array.isArray(aiResult.atsReport.matchedSkills) ? aiResult.atsReport.matchedSkills : [],
+    missingSkills: Array.isArray(aiResult.atsReport.missingSkills) ? aiResult.atsReport.missingSkills : [],
+    weakSkills: (aiResult.atsReport.weakSkills || []).map(skill => 
+      typeof skill === 'string' ? { skill, reason: 'Identified as weak match' } : skill
+    ),
+    strengths: Array.isArray(aiResult.atsReport.strengths) ? aiResult.atsReport.strengths : [],
+    improvements: Array.isArray(aiResult.atsReport.improvements) ? aiResult.atsReport.improvements : [],
+    executiveSummary: aiResult.atsReport.executiveSummary || aiResult.atsReport.summary || "",
+    jobMatchingInsights: {
+      strongestMatchingStacks: (aiResult.atsReport.jobMatchingInsights?.strongestMatchingStacks || []),
+      weakMatchingStacks: (aiResult.atsReport.jobMatchingInsights?.weakMatchingStacks || []),
+      estimatedMarketFit: aiResult.atsReport.jobMatchingInsights?.estimatedMarketFit || 0,
+      recommendedRoles: (aiResult.atsReport.jobMatchingInsights?.recommendedRoles || []),
+      avoidRoles: (aiResult.atsReport.jobMatchingInsights?.avoidRoles || []),
+    },
+    actionPlan: (aiResult.atsReport.actionPlan || []),
+    aiMetadata: {
+      modelUsed: 'gemini-1.5-flash',
+      analysisDurationMs: aiResult.atsReport.analysisDurationMs || 0,
+      tokenUsage: aiResult.atsReport.tokenUsage || 0,
+      analyzedAt: new Date(),
+    },
   });
 
   // 🆕 PROFILE MERGE
