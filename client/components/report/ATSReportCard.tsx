@@ -43,7 +43,7 @@ export const ATSReportCard = ({ report }: any) => {
 
         {/* Summary */}
         <p className="text-sm text-slate-600 line-clamp-2 mb-4">
-          {report.summary}
+          {report.executiveSummary || report.summary}
         </p>
 
         {/* Skills */}

@@ -54,16 +54,8 @@ const ATSReportSchema = new mongoose.Schema({
   /**
    * SKILL ANALYSIS
    */
-  matchedSkills: [{
-    skill: String,
-    confidence: Number,
-    importance: Number,
-  }],
-  missingSkills: [{
-    skill: String,
-    importance: Number,
-    recommendation: String,
-  }],
+  matchedSkills: [String],
+  missingSkills: [String],
   weakSkills: [{
     skill: String,
     reason: String,
@@ -72,25 +64,12 @@ const ATSReportSchema = new mongoose.Schema({
   /**
    * STRENGTHS
    */
-  strengths: [{
-    title: String,
-    explanation: String,
-    impact: String,
-  }],
+  strengths: [String],
 
   /**
    * IMPROVEMENTS
    */
-  improvements: [{
-    category: String,
-    issue: String,
-    recommendation: String,
-    priority: {
-      type: String,
-      enum: ['Low', 'Medium', 'High'],
-      default: 'Medium',
-    }
-  }],
+  improvements: [String],
 
   /**
    * JOB MATCHING INSIGHTS
