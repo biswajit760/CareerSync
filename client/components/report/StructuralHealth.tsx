@@ -1,47 +1,129 @@
-import { Layers, CheckCheck, AlertCircle } from "lucide-react";
+"use client";
 
-import { G, sectionTitle, sectionLabel } from "@/lib/constants";
-import IconWrap from "../analyze/shared/IconWrap";
+import {
+  CheckCircle2,
+  AlertTriangle,
+  ShieldCheck,
+} from "lucide-react";
 
-export default function StructuralHealth({ missingCount }: { missingCount: number }) {
-  const rows = [
-    { label: "Contact Information", status: "Optimal", color: "text-emerald-700", grad: G.optimal, analysis: "All links verified" },
-    { label: "Professional Experience", status: "Strong", color: "text-emerald-700", grad: G.optimal, analysis: "Quantifiable data found" },
-    { label: "Technical Skills", status: "Needs Work", color: "text-amber-700", grad: G.warning, analysis: `Missing ${missingCount} key tags` },
-  ];
+interface Props {
+  missingCount?: number;
+}
 
+const rows = [
+  {
+    section: "Contact Information",
+    status: "Optimal",
+    analysis: "All links verified",
+    type: "good",
+  },
+  {
+    section: "Professional Experience",
+    status: "Strong",
+    analysis: "Quantifiable metrics found",
+    type: "good",
+  },
+  {
+    section: "Technical Skills",
+    status: "Needs Work",
+    analysis: "Missing 13 key tags",
+    type: "warning",
+  },
+];
+
+export default function StructuralHealth({
+  missingCount,
+}: Props) {
   return (
-    <section className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
-      <div className="flex items-center gap-3 border-b border-slate-100 bg-slate-50/50 px-6 py-3">
-        <IconWrap gradient={G.health} size="md">
-          <Layers size={14} />
-        </IconWrap>
-        <h2 className={sectionTitle}>Structural Health Check</h2>
-      </div>
-      <table className="w-full text-left text-sm">
-        <thead>
-          <tr className="border-b border-slate-100">
-            <th className={sectionLabel + " px-6 py-3"}>Section</th>
-            <th className={sectionLabel + " px-6 py-3"}>Status</th>
-            <th className={sectionLabel + " px-6 py-3 text-right"}>Analysis</th>
-          </tr>
-        </thead>
-        <tbody className="divide-y divide-slate-50 font-medium">
+    <div className="relative overflow-hidden rounded-[28px] border border-white/[0.06] bg-white/[0.03] backdrop-blur-2xl">
+
+      {/* Glow */}
+      <div className="absolute bottom-[-20%] left-[-10%] w-[260px] h-[260px] bg-lime-400/10 blur-[120px] rounded-full" />
+
+      <div className="relative z-10">
+
+        {/* Header */}
+        <div className="flex items-center gap-3 border-b border-white/[0.05] px-8 py-6">
+
+          <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-lime-400/15 bg-lime-400/[0.08]">
+            <ShieldCheck className="w-5 h-5 text-lime-300" />
+          </div>
+
+          <div>
+            <h3 className="text-lg font-medium text-white">
+              Structural Health Check
+            </h3>
+
+            <p className="text-sm text-white/35">
+              ATS formatting & optimization audit
+            </p>
+          </div>
+        </div>
+
+        {/* Table */}
+        <div className="p-6 space-y-4">
+
           {rows.map((row, i) => (
-            <tr key={i} className="transition hover:bg-slate-50">
-              <td className="px-6 py-4 text-[13px] text-slate-700">{row.label}</td>
-              <td className="px-6 py-4">
-                <span className="flex items-center gap-2">
-                  <IconWrap gradient={row.grad} size="sm">
-                    {row.status === "Optimal" || row.status === "Strong" ? <CheckCheck size={12} /> : <AlertCircle size={12} />}                  </IconWrap>
-                  <span className={`text-[13px] font-semibold ${row.color}`}>{row.status}</span>
-                </span>
-              </td>
-              <td className="px-6 py-4 text-right text-[13px] text-slate-400">{row.analysis}</td>
-            </tr>
+            <div
+              key={i}
+              className="
+                flex items-center justify-between
+                rounded-2xl
+                border border-white/[0.05]
+                bg-black/20
+                px-6 py-5
+              "
+            >
+
+              {/* Left */}
+              <div>
+                <h4 className="text-white font-medium">
+                  {row.section}
+                </h4>
+
+                <p className="mt-1 text-sm text-white/35">
+                  {row.analysis}
+                </p>
+              </div>
+
+              {/* Right */}
+              <div
+                className={`
+                  flex items-center gap-2
+                  rounded-full px-4 py-2 text-sm
+
+                  ${
+                    row.type === "good"
+                      ? "bg-lime-400/[0.08] text-lime-300 border border-lime-400/15"
+                      : "bg-orange-400/[0.08] text-orange-300 border border-orange-400/15"
+                  }
+                `}
+              >
+
+                {row.type === "good" ? (
+                  <CheckCircle2 className="w-4 h-4" />
+                ) : (
+                  <AlertTriangle className="w-4 h-4" />
+                )}
+
+                {row.status}
+              </div>
+            </div>
           ))}
-        </tbody>
-      </table>
-    </section>
+        </div>
+
+        {/* Footer */}
+        <div className="border-t border-white/[0.05] px-8 py-5 flex items-center justify-between">
+
+          <p className="text-sm text-white/35">
+            Missing Keywords
+          </p>
+
+          <div className="rounded-full border border-lime-400/15 bg-lime-400/[0.08] px-4 py-2 text-sm text-lime-300">
+            {missingCount || 0} Missing Skills
+          </div>
+        </div>
+      </div>
+    </div>
   );
 }

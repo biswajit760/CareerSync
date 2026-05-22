@@ -1,5 +1,12 @@
 @import "tailwindcss";
 
+
+
+@theme {
+  /* This overrides or extends Tailwind's default 'font-sans' utility */
+  --font-sans: var(--font-manrope), ui-sans-serif, system-ui, sans-serif;
+}
+
 @theme {
   /* Marquee Durations (30s-40s is usually the sweet spot for readability) */
   --animate-marquee: marquee 35s linear infinite;
@@ -57,4 +64,46 @@
   .bg-grad-warning { @apply bg-gradient-to-br from-amber-400 to-orange-500; }
   .bg-grad-risks { @apply bg-gradient-to-br from-rose-500 to-red-700; }
   .bg-grad-gaps { @apply bg-gradient-to-br from-rose-500 to-rose-700; }
+}
+
+@keyframes atmosphereLeft {
+  0% {
+    transform: translate3d(0px, 0px, 0px) scale(1);
+  }
+
+  50% {
+    transform: translate3d(60px, 30px, 0px) scale(1.08);
+  }
+
+  100% {
+    transform: translate3d(0px, 0px, 0px) scale(1);
+  }
+}
+
+@keyframes atmosphereRight {
+  0% {
+    transform: translate3d(0px, 0px, 0px) scale(1);
+  }
+
+  50% {
+    transform: translate3d(-60px, 40px, 0px) scale(1.1);
+  }
+
+  100% {
+    transform: translate3d(0px, 0px, 0px) scale(1);
+  }
+}
+
+@keyframes atmosphereCenter {
+  0% {
+    transform: translateX(-50%) translateY(0px) scale(1);
+  }
+
+  50% {
+    transform: translateX(-50%) translateY(25px) scale(1.05);
+  }
+
+  100% {
+    transform: translateX(-50%) translateY(0px) scale(1);
+  }
 }

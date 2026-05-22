@@ -11,22 +11,25 @@ import {
 } from "recharts";
 import { motion } from "framer-motion";
 
-export default function AtsRadarChart({ breakdown }: { breakdown: any }) {
+export default function AtsRadarChart({ breakdown }: { breakdown: Record<string, unknown> | null }) {
   if (!breakdown) return null;
 
   const chartData = [
-    { subject: "Keywords", score: Number(breakdown.keywordMatch ?? 0) },
-    { subject: "Skills", score: Number(breakdown.technicalSkills ?? breakdown.skillsMatch ?? 0) },
-    { subject: "Experience", score: Number(breakdown.experienceStrength ?? breakdown.experience ?? 0) },
-    { subject: "Projects", score: Number(breakdown.projectQuality ?? breakdown.projects ?? 0) },
-    { subject: "Formatting", score: Number(breakdown.formatting ?? 0) },
+    { subject: "Keywords", score: Number((breakdown.keywordMatch as number | undefined) ?? 0) },
+    { subject: "Skills", score: Number((breakdown.technicalSkills as number | undefined) ?? (breakdown.skillsMatch as number | undefined) ?? 0) },
+    { subject: "Experience", score: Number((breakdown.experienceStrength as number | undefined) ?? (breakdown.experience as number | undefined) ?? 0) },
+    { subject: "Projects", score: Number((breakdown.projectQuality as number | undefined) ?? (breakdown.projects as number | undefined) ?? 0) },
+    { subject: "Formatting", score: Number((breakdown.formatting as number | undefined) ?? 0) },
   ];
 
   // 🔥 Dynamic Avg Score
-  const avgScore = useMemo(() => {
+  const chartMemoData = useMemo(() => {
     const total = chartData.reduce((acc, item) => acc + item.score, 0);
-    return (total / chartData.length).toFixed(1);
-  }, [breakdown]);
+    return {
+      avg: (total / chartData.length).toFixed(1),
+      data: chartData,
+    };
+  }, [chartData]);
 
   return (
     <motion.div
@@ -35,13 +38,12 @@ export default function AtsRadarChart({ breakdown }: { breakdown: any }) {
       transition={{ duration: 0.6 }}
       className="w-full"
     >
-      {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.25em]">
           Competency Map
         </h4>
         <span className="text-[10px] font-bold text-slate-400 bg-slate-50 px-2 py-0.5 rounded">
-          BETA v1.2
+          BETA v1.2 - Score: {chartMemoData.avg}
         </span>
       </div>
 
@@ -99,35 +101,7 @@ export default function AtsRadarChart({ breakdown }: { breakdown: any }) {
         </div>
       </div>
 
-      {/* Stats */}
-      <div className="mt-5 grid grid-cols-2 gap-3">
-        
-        {/* Avg Score */}
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3 }}
-          className="p-3 rounded-lg border border-slate-200 bg-gradient-to-br from-slate-50 to-white"
-        >
-          <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">
-            Avg Score
-          </p>
-          <p className="text-lg font-bold text-slate-800">{avgScore}</p>
-        </motion.div>
-
-        {/* Percentile */}
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.4 }}
-          className="p-3 rounded-lg border border-emerald-100 bg-gradient-to-br from-emerald-50 to-white"
-        >
-          <p className="text-[9px] font-bold text-emerald-500 uppercase tracking-widest">
-            Percentile
-          </p>
-          <p className="text-lg font-bold text-emerald-600">Top 12%</p>
-        </motion.div>
-      </div>
+      
     </motion.div>
   );
 }

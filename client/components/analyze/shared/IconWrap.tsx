@@ -40,7 +40,7 @@ export default function IconWrap({
           correctly with the wrapper size 
       */}
       {React.isValidElement(children) 
-        ? React.cloneElement(children as React.ReactElement<any>, { 
+        ? React.cloneElement(children as React.ReactElement<{ size: number; strokeWidth?: number }>, { 
             size: size === "sm" ? 12 : size === "lg" ? 20 : 16,
             strokeWidth: 2.5 
           }) 

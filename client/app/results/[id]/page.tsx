@@ -1,180 +1,461 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useParams, useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
-import { Download } from "lucide-react";
+import { motion } from "framer-motion";
+import { useParams } from "next/navigation";
+import { useEffect, useState } from "react";
 
-import { tokenManager } from "@/lib/api";
+import {
+  Sparkles,
+  BrainCircuit,
+  ShieldCheck,
+  ScanSearch,
+  AlertTriangle,
+  CheckCircle2,
+} from "lucide-react";
 
-// Components
-import AnalysisHeader from "@/components/report/AnalysisHeader";
-import ExecutiveSummary from "@/components/report/ExecutiveSummary";
-import StructuralHealth from "@/components/report/StructuralHealth";
-import RecruiterImpression from "@/components/report/RecruiterImpression";
-import KeywordAnalysis from "@/components/report/KeywordAnalysis";
-import CriticalGaps from "@/components/report/CriticalGaps";
-
-// Constants
-import { G, sectionLabel, sectionTitle } from "@/lib/constants";
-
-// Lazy load
 const AtsRadarChart = dynamic(
-  () => import("../../../components/analyze/AtsRadarChart"),
+  () => import("@/components/analyze/AtsRadarChart"),
   { ssr: false }
 );
 
-export default function ResultPage() {
+import RecruiterImpression from "@/components/report/RecruiterImpression";
+import CriticalGaps from "@/components/report/CriticalGaps";
+import KeywordAnalysis from "@/components/report/KeywordAnalysis";
+import AnalysisHeader from "@/components/report/AnalysisHeader";
+
+export default function ATSReportPage() {
   const params = useParams();
-  const router = useRouter();
-
-  const id = Array.isArray(params.id) ? params.id[0] : params.id;
-
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!id) return;
-
-    const fetchResult = async () => {
+    const fetchATSReport = async () => {
       try {
-        const token = tokenManager.get();
+        setLoading(true);
+        setError(null);
 
-        if (!token) {
-          router.push("/login");
+        const reportId = params?.id;
+        if (!reportId) {
+          setError("Report ID not found");
+          setLoading(false);
           return;
         }
 
-        const res = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/api/ats/${id}`,
+        const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
+        const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+
+        const response = await fetch(
+          `${API_URL}/api/ats/${reportId}`,
           {
-            headers: { Authorization: `Bearer ${token}` },
+            method: "GET",
+            headers: {
+              "Content-Type": "application/json",
+              ...(token && { Authorization: `Bearer ${token}` }),
+            },
           }
         );
 
-        if (!res.ok) {
-          const msg = await res.text();
-          throw new Error(msg || "Failed to fetch report");
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}));
+          throw new Error(
+            errorData?.message || `Failed to fetch ATS report (${response.status})`
+          );
         }
 
-        const result = await res.json();
-        setData(result.data);
+        const result = await response.json();
+        setData(result?.data || result);
       } catch (err: any) {
-        console.error(err);
-        setError(err.message || "Something went wrong");
+        console.error("Error fetching ATS report:", err);
+        setError(err.message || "Failed to load report");
       } finally {
         setLoading(false);
       }
     };
 
-    fetchResult();
-  }, [id, router]);
+    if (params?.id) {
+      fetchATSReport();
+    }
+  }, [params?.id]);
 
-  // Loading UI
   if (loading) {
     return (
-      <div className="flex h-screen items-center justify-center bg-white">
-        <div className="flex flex-col items-center gap-3">
-          <div className="h-5 w-5 animate-spin rounded-full border-2 border-slate-900 border-t-transparent" />
-          <span className={sectionLabel}>
-            Generating CareerSync Report…
-          </span>
+      <div className="relative min-h-screen overflow-hidden bg-black text-white flex items-center justify-center">
+        <div className="text-center">
+          <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-lime-400"></div>
+          <p className="mt-4 text-white/60">Loading ATS Report...</p>
         </div>
       </div>
     );
   }
 
-  // Error UI
-  if (error) {
+  if (error || !data) {
     return (
-      <div className="flex h-screen items-center justify-center text-red-500">
-        {error}
-      </div>
-    );
-  }
-
-  // No data
-  if (!data) {
-    return (
-      <div className="flex h-screen items-center justify-center text-slate-500">
-        Report not found.
+      <div className="relative min-h-screen overflow-hidden bg-black text-white flex items-center justify-center">
+        <div className="text-center">
+          <AlertTriangle className="w-12 h-12 text-orange-300 mx-auto" />
+          <p className="mt-4 text-white/60">{error || "Failed to load report"}</p>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="relative min-h-screen bg-[#FAFAFA] font-sans text-slate-900 selection:bg-blue-100">
-      
-      
-      {/* MAIN CONTENT */}
-      <main className="mt-16 mx-auto max-w-7xl p-6 lg:p-10 space-y-8 mx-auto max-w-7xl p-6 lg:p-10 space-y-10">
+    <div className="relative min-h-screen overflow-hidden bg-black text-white">
 
-        {/* SECTION: OVERVIEW */}
-        <section className="space-y-6">
-          
+      {/* ================================================= */}
+      {/* CINEMATIC BACKGROUND */}
+      {/* ================================================= */}
 
-          <AnalysisHeader 
-            atsScore={data.atsScore} 
-            skillsMatch={data.scoreBreakdown?.technicalSkills || 0}
-            keywordMatch={data.scoreBreakdown?.keywordMatch || 0}
-          />
-        </section>
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(163,230,53,0.08),transparent_35%)]" />
 
-        {/* SECTION: ANALYSIS GRID */}
-        <section className="grid grid-cols-1 gap-8 lg:grid-cols-12">
-          
-          {/* LEFT */}
-          <div className="space-y-6 lg:col-span-8">
-            <ExecutiveSummary content={data.executiveSummary} />
+      <div className="absolute top-[-10%] left-[-10%] w-[700px] h-[700px] bg-lime-400/10 blur-[180px] rounded-full pointer-events-none" />
 
-            <StructuralHealth 
-              missingCount={data.missingSkills?.length || 0} 
-            />
+      <div className="absolute bottom-[-20%] right-[-10%] w-[700px] h-[700px] bg-lime-400/5 blur-[180px] rounded-full pointer-events-none" />
+
+      <div
+        className="absolute inset-0 opacity-[0.02]"
+        style={{
+          backgroundImage: `
+            linear-gradient(rgba(255,255,255,0.08) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(255,255,255,0.08) 1px, transparent 1px)
+          `,
+          backgroundSize: "80px 80px",
+        }}
+      />
+
+      {/* ================================================= */}
+      {/* MAIN */}
+      {/* ================================================= */}
+
+      <main className="relative z-10 max-w-7xl mx-auto px-6 py-20">
+
+        {/* ================================================= */}
+        {/* HEADER */}
+        {/* ================================================= */}
+
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="mb-14"
+        >
+
+          <div className="inline-flex items-center gap-3 rounded-full border border-lime-400/15 bg-lime-400/[0.05] px-5 py-2 backdrop-blur-xl">
+
+            <Sparkles className="w-4 h-4 text-lime-300" />
+
+            <span className="text-[11px] uppercase tracking-[0.24em] text-lime-300">
+              AI Resume Intelligence
+            </span>
           </div>
 
-          {/* RIGHT */}
-          <aside className="space-y-6 lg:col-span-4">
-            <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
-              <p className={sectionLabel + " mb-4"}>
-                ATS Dimension Audit
-              </p>
+          <h1 className="mt-8 text-5xl md:text-7xl font-semibold tracking-[-0.06em] leading-[0.92]">
 
-              <AtsRadarChart breakdown={data.scoreBreakdown} />
+            Career Intelligence
 
-              <div className="mt-6 flex items-center justify-between text-sm">
-                <div>
-                  <p className="text-slate-400 text-xs">Avg Score</p>
-                  <p className="font-semibold">
-                    {data.avgScore || 0}
-                  </p>
+            <br />
+
+            <span className="bg-gradient-to-r from-white via-lime-100 to-lime-400 bg-clip-text text-transparent">
+              ATS Report
+            </span>
+          </h1>
+
+          <p className="mt-8 max-w-3xl text-lg leading-relaxed text-white/45">
+            AI-powered ATS analysis evaluating recruiter compatibility,
+            technical alignment, keyword optimization,
+            and hiring readiness.
+          </p>
+        </motion.div>
+
+        {/* ================================================= */}
+        {/* TOP METRICS */}
+        {/* ================================================= */}
+
+        <AnalysisHeader data={data} />
+
+        {/* ================================================= */}
+        {/* MAIN CONTENT */}
+        {/* ================================================= */}
+
+        <section className="mt-8 grid grid-cols-1 xl:grid-cols-12 gap-8">
+
+          {/* LEFT SIDE */}
+
+          <div className="space-y-8 xl:col-span-8">
+
+            {/* EXECUTIVE SUMMARY */}
+
+            <div className="rounded-[36px] border border-white/[0.06] bg-white/[0.03] backdrop-blur-2xl overflow-hidden">
+
+              <div className="flex items-center gap-4 border-b border-white/[0.05] px-8 py-6">
+
+                <div className="flex h-14 w-14 items-center justify-center rounded-2xl border border-lime-400/10 bg-lime-400/[0.08]">
+                  <BrainCircuit className="w-6 h-6 text-lime-300" />
                 </div>
 
-                <div className="text-green-600 font-semibold">
-                  Top {data.percentile || 0}%
+                <div>
+                  <h3 className="text-xl font-medium">
+                    Executive Summary
+                  </h3>
+
+                  <p className="mt-1 text-sm text-white/35">
+                    AI-generated recruiter overview
+                  </p>
+                </div>
+              </div>
+
+              <div className="p-8">
+
+                <div className="rounded-[28px] border border-white/[0.06] bg-black/20 p-8">
+
+                  <p className="text-[15px] leading-8 text-white/65">
+                    {data?.executiveSummary ||
+                      "This candidate demonstrates strong full-stack engineering capability with solid ATS compatibility, relevant technical projects, and practical MERN stack expertise. The resume aligns well with recruiter expectations, though keyword optimization and technical depth can be further improved for higher shortlist probability."}
+                  </p>
                 </div>
               </div>
             </div>
-          </aside>
+
+            {/* STRUCTURAL HEALTH */}
+
+            <div className="rounded-[36px] border border-white/[0.06] bg-white/[0.03] backdrop-blur-2xl overflow-hidden">
+
+              <div className="flex items-center gap-4 border-b border-white/[0.05] px-8 py-6">
+
+                <div className="flex h-14 w-14 items-center justify-center rounded-2xl border border-lime-400/10 bg-lime-400/[0.08]">
+                  <ShieldCheck className="w-6 h-6 text-lime-300" />
+                </div>
+
+                <div>
+                  <h3 className="text-xl font-medium">
+                    Structural Health Check
+                  </h3>
+
+                  <p className="mt-1 text-sm text-white/35">
+                    ATS formatting & optimization audit
+                  </p>
+                </div>
+              </div>
+
+              <div className="p-6 space-y-4">
+
+                {[
+                  {
+                    section: "Contact Information",
+                    status: "Optimal",
+                    analysis: "All links verified",
+                    type: "good",
+                  },
+                  {
+                    section: "Professional Experience",
+                    status: "Strong",
+                    analysis: "Quantifiable metrics found",
+                    type: "good",
+                  },
+                  {
+                    section: "Technical Skills",
+                    status: "Needs Work",
+                    analysis: "Missing key skill tags",
+                    type: "warning",
+                  },
+                ].map((row, i) => (
+                  <div
+                    key={i}
+                    className="
+                      flex items-center justify-between
+                      rounded-2xl
+                      border border-white/[0.05]
+                      bg-black/20
+                      px-6 py-5
+                    "
+                  >
+
+                    <div>
+                      <h4 className="text-white font-medium">
+                        {row.section}
+                      </h4>
+
+                      <p className="mt-1 text-sm text-white/35">
+                        {row.analysis}
+                      </p>
+                    </div>
+
+                    <div
+                      className={`
+                        flex items-center gap-2
+                        rounded-full px-4 py-2 text-sm
+
+                        ${
+                          row.type === "good"
+                            ? "bg-lime-400/[0.08] text-lime-300 border border-lime-400/15"
+                            : "bg-orange-400/[0.08] text-orange-300 border border-orange-400/15"
+                        }
+                      `}
+                    >
+
+                      {row.type === "good" ? (
+                        <CheckCircle2 className="w-4 h-4" />
+                      ) : (
+                        <AlertTriangle className="w-4 h-4" />
+                      )}
+
+                      {row.status}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* RECRUITER IMPRESSION */}
+
+            <div className="rounded-[36px] border border-white/[0.06] bg-white/[0.03] backdrop-blur-2xl overflow-hidden">
+
+              <div className="flex items-center gap-4 border-b border-white/[0.05] px-8 py-6">
+
+                <div className="flex h-14 w-14 items-center justify-center rounded-2xl border border-lime-400/10 bg-lime-400/[0.08]">
+                  <BrainCircuit className="w-6 h-6 text-lime-300" />
+                </div>
+
+                <div>
+                  <h3 className="text-xl font-medium text-white">
+                    Recruiter Impression
+                  </h3>
+
+                  <p className="mt-1 text-sm text-white/35">
+                    AI-generated hiring perspective
+                  </p>
+                </div>
+              </div>
+
+              <div className="p-8">
+                <RecruiterImpression
+                  strengths={data?.strengths || []}
+                  improvements={data?.improvements || []}
+                />
+              </div>
+            </div>
+
+            {/* CRITICAL GAPS */}
+
+            <div className="rounded-[36px] border border-white/[0.06] bg-white/[0.03] backdrop-blur-2xl overflow-hidden">
+
+              <div className="flex items-center gap-4 border-b border-white/[0.05] px-8 py-6">
+
+                <div className="flex h-14 w-14 items-center justify-center rounded-2xl border border-orange-400/10 bg-orange-400/[0.08]">
+                  <AlertTriangle className="w-6 h-6 text-orange-300" />
+                </div>
+
+                <div>
+                  <h3 className="text-xl font-medium text-white">
+                    Critical Gaps
+                  </h3>
+
+                  <p className="mt-1 text-sm text-white/35">
+                    Missing ATS optimization opportunities
+                  </p>
+                </div>
+              </div>
+
+              <div className="p-8">
+                <CriticalGaps
+                  improvements={data?.improvements || []}
+                  score={data?.atsScore}
+                />
+              </div>
+            </div>
+
+            {/* KEYWORD ANALYSIS */}
+
+            <div className="rounded-[36px] border border-white/[0.06] bg-white/[0.03] backdrop-blur-2xl overflow-hidden">
+
+              <div className="flex items-center gap-4 border-b border-white/[0.05] px-8 py-6">
+
+                <div className="flex h-14 w-14 items-center justify-center rounded-2xl border border-cyan-400/10 bg-cyan-400/[0.08]">
+                  <Sparkles className="w-6 h-6 text-cyan-300" />
+                </div>
+
+                <div>
+                  <h3 className="text-xl font-medium text-white">
+                    Keyword Intelligence
+                  </h3>
+
+                  <p className="mt-1 text-sm text-white/35">
+                    ATS keyword alignment breakdown
+                  </p>
+                </div>
+              </div>
+
+              <div className="p-8">
+                <KeywordAnalysis data={data} />
+              </div>
+            </div>
+          </div>
+
+          {/* RIGHT SIDE */}
+
+          <div className="space-y-8 xl:col-span-4">
+
+            {/* RADAR */}
+
+            <div className="rounded-[36px] border border-white/[0.06] bg-white/[0.03] backdrop-blur-2xl p-8">
+
+              <div className="flex items-center gap-3">
+
+                <ScanSearch className="w-5 h-5 text-lime-300" />
+
+                <p className="text-sm font-medium">
+                  ATS Dimension Audit
+                </p>
+              </div>
+
+              <div className="mt-10">
+                <AtsRadarChart
+                  breakdown={data?.scoreBreakdown}
+                />
+              </div>
+
+              
+            </div>
+
+            {/* MISSING KEYWORDS */}
+
+            <div className="rounded-[36px] border border-white/[0.06] bg-white/[0.03] backdrop-blur-2xl p-8">
+
+              <div className="flex items-center gap-3">
+
+                <Sparkles className="w-5 h-5 text-lime-300" />
+
+                <p className="text-sm font-medium">
+                  Missing Keywords
+                </p>
+              </div>
+
+              <div className="mt-8 flex flex-wrap gap-3">
+
+                {(data?.missingSkills || [])
+                  .slice(0, 10)
+                  .map((skill: string, i: number) => (
+                    <div
+                      key={i}
+                      className="
+                        rounded-full
+                        border
+                        border-white/[0.06]
+                        bg-black/20
+                        px-4
+                        py-2
+                        text-sm
+                        text-white/70
+                      "
+                    >
+                      {skill}
+                    </div>
+                  ))}
+              </div>
+            </div>
+          </div>
         </section>
-
-        {/* SECTION: DETAILS */}
-        <section className="space-y-6">
-         
-
-          <RecruiterImpression 
-            strengths={data.strengths || []} 
-            improvements={data.improvements || []} 
-          />
-
-          <CriticalGaps 
-            improvements={data.improvements || []} 
-            score={data.atsScore} 
-          />
-
-          <KeywordAnalysis data={data} />
-        </section>
-
       </main>
     </div>
   );

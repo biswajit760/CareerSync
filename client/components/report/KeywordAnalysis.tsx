@@ -1,92 +1,134 @@
-import { Cpu, Info } from "lucide-react";
+"use client";
 
-import { G, sectionTitle, sectionLabel } from "@/lib/constants";
-import IconWrap from "../analyze/shared/IconWrap";
-
-interface KeywordAnalysisProps {
-  data: {
-    missingSkills: string[];
-    matchedSkills: string[];
-  };
+interface Props {
+  data: any;
 }
 
-export default function KeywordAnalysis({ data }: KeywordAnalysisProps) {
-  // Static list for "Weak Keywords" as seen in your original code
-  const weakKeywords = ["Responsive Design", "Collaboration", "Java"];
+export default function KeywordAnalysis({ data }: Props) {
+    console.log("KEYWORD DATA:", data);
+
+  // ✅ SAFE FALLBACKS FOR DIFFERENT API STRUCTURES
+
+  const missingSkills =
+    data?.missingSkills ||
+    data?.missingKeywords ||
+    data?.keywordAnalysis?.missing ||
+    [];
+
+  const matchedSkills =
+    data?.matchedSkills ||
+    data?.matchedKeywords ||
+    data?.keywordAnalysis?.matched ||
+    [];
 
   return (
-    <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-      {/* HEADER */}
-      <div className="mb-6 flex items-center gap-3 border-b border-slate-100 pb-4">
-        <IconWrap gradient={G.keyword} size="md">
-          <Cpu size={14} />
-        </IconWrap>
-        <div>
-          <h2 className={`${sectionTitle} !text-[15px]`}>
-            Keyword & ATS Analysis
-          </h2>
-          <p className={`${sectionLabel} mt-0.5`}>
-            Semantic match & gap report
-          </p>
+    <div className="space-y-10">
+
+      {/* MATCHED KEYWORDS */}
+
+      <div>
+
+        <div className="flex items-center justify-between mb-5">
+          <div>
+            <h3 className="text-lg font-medium text-white">
+              Matched Keywords
+            </h3>
+
+            <p className="text-sm text-white/35 mt-1">
+              Strong ATS-aligned terms detected
+            </p>
+          </div>
+
+          <div className="px-3 py-1 rounded-full border border-lime-400/10 bg-lime-400/[0.06] text-xs text-lime-300">
+            {matchedSkills.length} matched
+          </div>
+        </div>
+
+        <div className="flex flex-wrap gap-3">
+
+          {matchedSkills.length > 0 ? (
+            matchedSkills.map((skill: string, i: number) => (
+              <div
+                key={i}
+                className="
+                  group
+                  rounded-full
+                  border border-lime-400/15
+                  bg-lime-400/[0.08]
+                  px-4 py-2
+                  text-sm
+                  text-lime-300
+                  transition-all duration-300
+                  hover:bg-lime-400/[0.14]
+                  hover:border-lime-400/25
+                  hover:scale-[1.03]
+                "
+              >
+                {skill}
+              </div>
+            ))
+          ) : (
+            <div className="rounded-2xl border border-white/[0.05] bg-white/[0.02] px-5 py-4">
+              <p className="text-sm text-white/35">
+                No matched keywords found.
+              </p>
+            </div>
+          )}
         </div>
       </div>
 
-      <div className="space-y-8">
-        {/* MISSING KEYWORDS */}
-        <div>
-          <h3 className="mb-3 flex items-center gap-2 text-[13px] font-semibold text-slate-500">
-            Missing keywords from JD
-            <Info size={12} className="text-slate-400" />
-          </h3>
-          <div className="flex flex-wrap gap-2">
-            {data.missingSkills.map((skill, i) => (
-              <span
-                key={i}
-                className="cursor-default rounded-full border border-rose-100 bg-[#FFF5F5] px-4 py-1.5 text-[13px] font-medium text-[#C53030] shadow-sm transition-transform hover:scale-105"
-              >
-                {skill}
-              </span>
-            ))}
+      {/* MISSING KEYWORDS */}
+
+      <div>
+
+        <div className="flex items-center justify-between mb-5">
+          <div>
+            <h3 className="text-lg font-medium text-white">
+              Missing Keywords
+            </h3>
+
+            <p className="text-sm text-white/35 mt-1">
+              Important ATS terms absent from resume
+            </p>
+          </div>
+
+          <div className="px-3 py-1 rounded-full border border-orange-400/10 bg-orange-400/[0.06] text-xs text-orange-300">
+            {missingSkills.length} missing
           </div>
         </div>
 
-        {/* WEAK KEYWORDS */}
-        <div>
-          <h3 className="mb-3 text-[13px] font-semibold text-slate-500">
-            Weak keywords (present but not impactful)
-          </h3>
-          <div className="flex flex-wrap gap-2">
-            {weakKeywords.map((skill, i) => (
-              <span
+        <div className="flex flex-wrap gap-3">
+
+          {missingSkills.length > 0 ? (
+            missingSkills.map((skill: string, i: number) => (
+              <div
                 key={i}
-                className="cursor-default rounded-full border border-amber-100 bg-[#FFFBEB] px-4 py-1.5 text-[13px] font-medium text-[#92400E] shadow-sm transition-transform hover:scale-105"
+                className="
+                  group
+                  rounded-full
+                  border border-orange-400/15
+                  bg-orange-400/[0.08]
+                  px-4 py-2
+                  text-sm
+                  text-orange-300
+                  transition-all duration-300
+                  hover:bg-orange-400/[0.14]
+                  hover:border-orange-400/25
+                  hover:scale-[1.03]
+                "
               >
                 {skill}
-              </span>
-            ))}
-          </div>
-        </div>
-
-        {/* SUGGESTED REPLACEMENTS */}
-        <div>
-          <h3 className="mb-3 text-[13px] font-semibold text-slate-500">
-            Suggested strong replacements
-          </h3>
-          <div className="flex flex-wrap gap-2">
-            {data.matchedSkills
-              .filter((s) => s.length > 5)
-              .slice(0, 6)
-              .map((skill, i) => (
-                <span
-                  key={i}
-                  className="cursor-default rounded-full border border-emerald-100 bg-[#F0FFF4] px-4 py-1.5 text-[13px] font-medium text-[#2F855A] shadow-sm transition-all hover:shadow-md hover:scale-105"
-                >
-                  {skill}
-                </span>
-              ))}
-          </div>
+              </div>
+            ))
+          ) : (
+            <div className="rounded-2xl border border-white/[0.05] bg-white/[0.02] px-5 py-4">
+              <p className="text-sm text-white/35">
+                No missing keywords detected.
+              </p>
+            </div>
+          )}
         </div>
       </div>
-    </section>
+    </div>
   );
 }
