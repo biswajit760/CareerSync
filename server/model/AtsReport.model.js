@@ -29,6 +29,16 @@ const ATSReportSchema = new mongoose.Schema({
   },
 
   /**
+   * PERCENTILE RANKING
+   */
+  percentile: {
+    type: Number,
+    default: 50,
+    min: 0,
+    max: 100,
+  },
+
+  /**
    * ATS HEALTH STATUS
    */
   atsGrade: {

@@ -1,111 +1,367 @@
 "use client";
 
-import { Brain, BarChart, Briefcase } from "lucide-react";
+import { motion } from "framer-motion";
+import { Brain, BarChart3, Briefcase } from "lucide-react";
 
 export default function FeaturesSection() {
   const features = [
     {
       title: "ATS Score Analysis",
-      description: "Get a detailed ATS score based on keywords, experience, and formatting.",
-      icon: BarChart,
-      // Custom styling for this specific card
-      theme: "hover:bg-emerald-50 hover:border-emerald-200",      iconColor: "text-emerald-600",
+      description:
+        "Get a detailed ATS score based on keywords, experience, and formatting.",
+      icon: BarChart3,
     },
     {
       title: "AI Skill Gap Detection",
-      description: "Discover missing skills and improve your resume with AI-powered insights.",
+      description:
+        "Discover missing skills and improve your resume with AI-powered insights.",
       icon: Brain,
-      theme: "hover:bg-blue-50 hover:border-blue-200",
-      iconColor: "text-blue-600",
     },
     {
       title: "Smart Job Matching",
-      description: "Get personalized job recommendations based on your skills and resume.",
+      description:
+        "Get personalized job recommendations based on your skills and resume.",
       icon: Briefcase,
-      theme: "hover:bg-purple-50 hover:border-purple-200",
-      iconColor: "text-purple-600",
-    }
+    },
   ];
 
   return (
-    <section className="w-full py-20 bg-white">
-      <div className="max-w-6xl mx-auto px-6">
-        
-        {/* 🔥 Section Header */}
-        <div className="text-center mb-14">
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-slate-100 text-slate-700 text-sm font-semibold mb-6">
-            <span className="relative flex h-2 w-2">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
+    <section className="relative w-full overflow-hidden bg-black py-28">
+
+      {/* ================= BACKGROUND ATMOSPHERE ================= */}
+
+      {/* Left Glow */}
+      <motion.div
+        animate={{
+          x: [0, 50, 0],
+          y: [0, -30, 0],
+        }}
+        transition={{
+          duration: 14,
+          repeat: Infinity,
+          ease: "easeInOut",
+        }}
+        className="
+          absolute
+          left-[-15%]
+          top-[10%]
+          w-[600px]
+          h-[600px]
+          bg-lime-400/10
+          blur-[160px]
+          rounded-full
+          pointer-events-none
+        "
+      />
+
+      {/* Right Glow */}
+      <motion.div
+        animate={{
+          x: [0, -50, 0],
+          y: [0, 30, 0],
+        }}
+        transition={{
+          duration: 16,
+          repeat: Infinity,
+          ease: "easeInOut",
+        }}
+        className="
+          absolute
+          right-[-15%]
+          bottom-[0%]
+          w-[600px]
+          h-[600px]
+          bg-lime-400/10
+          blur-[160px]
+          rounded-full
+          pointer-events-none
+        "
+      />
+
+      {/* Ambient Gradient */}
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(163,230,53,0.05),transparent_65%)]" />
+
+      {/* Noise Texture */}
+      <div
+        className="
+          absolute
+          inset-0
+          opacity-[0.035]
+          mix-blend-soft-light
+          pointer-events-none
+        "
+        style={{
+          backgroundImage:
+            "url('https://grainy-gradients.vercel.app/noise.svg')",
+        }}
+      />
+
+      {/* Top Border Glow */}
+      <div className="absolute top-0 inset-x-0 h-[1px] bg-gradient-to-r from-transparent via-lime-400/20 to-transparent" />
+
+      <div className="relative max-w-7xl mx-auto px-6">
+
+        {/* ================= HEADER ================= */}
+
+        <motion.div
+          initial={{
+            opacity: 0,
+            y: 40,
+            filter: "blur(10px)",
+          }}
+          whileInView={{
+            opacity: 1,
+            y: 0,
+            filter: "blur(0px)",
+          }}
+          viewport={{ once: true }}
+          transition={{
+            duration: 1,
+            ease: [0.22, 1, 0.36, 1],
+          }}
+          className="text-center mb-20"
+        >
+
+          {/* Badge */}
+          <div className="inline-flex items-center gap-3 px-5 py-2 rounded-full border border-white/[0.08] bg-white/[0.03] backdrop-blur-xl mb-8">
+
+            <div className="relative flex h-2.5 w-2.5">
+              <span className="absolute inline-flex h-full w-full rounded-full bg-lime-400 opacity-75 animate-ping"></span>
+              <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-lime-400 shadow-[0_0_12px_#a3e635]"></span>
+            </div>
+
+            <span className="text-sm tracking-wide text-white/70">
+              Smart Features
             </span>
-            Smart Features
           </div>
 
-          <h2 className="text-4xl md:text-5xl font-medium text-gray-700 tracking-tight">
-            Improve your resume with AI
+          {/* Heading */}
+          <h2 className="text-4xl md:text-6xl font-[500] tracking-tight text-white leading-tight">
+            Improve Your Resume
+            <br />
+            <span className="bg-gradient-to-b from-lime-300 to-lime-500 bg-clip-text text-transparent">
+              With AI Intelligence
+            </span>
           </h2>
 
-          <p className="mt-6 text-md text-gray-600 max-w-2xl mx-auto leading-relaxed">
+          {/* Description */}
+          <p className="mt-7 text-white/45 text-lg leading-relaxed max-w-3xl mx-auto">
             CareerSync helps you analyze your resume, identify missing skills,
-            and match with the best job opportunities using AI.
+            and discover the best opportunities using advanced AI-driven
+            career intelligence.
           </p>
-        </div>
+        </motion.div>
 
-        {/* 🔥 Content Layout */}
-        <div className="grid lg:grid-cols-2 gap-16 items-center">
-          
-          {/* 🖼️ Left Side (Overlapping Images) */}
-          <div className="relative flex justify-center h-[400px]">
-            {/* Top/Back Image */}
-            <div className="absolute top-0 left-10 md:left-20 z-0">
+        {/* ================= MAIN GRID ================= */}
+
+        <div className="grid lg:grid-cols-2 gap-20 items-center">
+
+          {/* ================= LEFT VISUAL ================= */}
+
+          <motion.div
+            initial={{
+              opacity: 0,
+              x: -60,
+              filter: "blur(12px)",
+            }}
+            whileInView={{
+              opacity: 1,
+              x: 0,
+              filter: "blur(0px)",
+            }}
+            viewport={{ once: true }}
+            transition={{
+              duration: 1,
+              ease: [0.22, 1, 0.36, 1],
+            }}
+            className="relative flex justify-center h-[500px]"
+          >
+
+            {/* Background Glow */}
+            <div className="absolute inset-0 flex items-center justify-center">
+              <div className="w-[420px] h-[420px] bg-lime-400/10 blur-[120px] rounded-full" />
+            </div>
+
+            {/* Back Card */}
+            <motion.div
+              animate={{
+                y: [0, -10, 0],
+                rotate: [-4, -2, -4],
+              }}
+              transition={{
+                duration: 8,
+                repeat: Infinity,
+                ease: "easeInOut",
+              }}
+              className="
+                absolute
+                top-0
+                left-10
+                md:left-20
+                z-0
+                w-[320px]
+                h-[420px]
+                rounded-[2rem]
+                overflow-hidden
+                border
+                border-white/[0.08]
+                bg-white/[0.03]
+                backdrop-blur-2xl
+                shadow-[0_0_80px_rgba(163,230,53,0.08)]
+              "
+            >
               <img
-                src="https://images.unsplash.com/photo-1556745757-8d76bdb6984b?auto=format&fit=crop&w=600&q=80"
-                className="w-[300px] h-[400px] object-cover rounded-[2rem] shadow-2xl rotate-[-2deg]"
+                src="https://images.unsplash.com/photo-1556745757-8d76bdb6984b?auto=format&fit=crop&w=800&q=80"
+                className="w-full h-full object-cover opacity-80"
                 alt="workspace"
               />
-            </div>
 
-            {/* Bottom/Front Image */}
-            <div className="absolute bottom-0 right-10 md:right-20 z-10">
+              <div className="absolute inset-0 bg-gradient-to-t from-black via-black/20 to-transparent" />
+            </motion.div>
+
+            {/* Front Card */}
+            <motion.div
+              animate={{
+                y: [0, 10, 0],
+                rotate: [4, 2, 4],
+              }}
+              transition={{
+                duration: 8,
+                repeat: Infinity,
+                ease: "easeInOut",
+              }}
+              className="
+                absolute
+                bottom-0
+                right-10
+                md:right-20
+                z-10
+                w-[280px]
+                h-[380px]
+                rounded-[2rem]
+                overflow-hidden
+                border
+                border-white/[0.10]
+                bg-white/[0.04]
+                backdrop-blur-2xl
+                shadow-[0_0_100px_rgba(163,230,53,0.10)]
+              "
+            >
               <img
-                src="https://images.unsplash.com/photo-1521737604893-d14cc237f11d?auto=format&fit=crop&w=600&q=80"
-                className="w-[260px] h-[360px] object-cover rounded-[2rem] shadow-2xl border-4 border-white rotate-[2deg]"
+                src="https://images.unsplash.com/photo-1521737604893-d14cc237f11d?auto=format&fit=crop&w=800&q=80"
+                className="w-full h-full object-cover opacity-90"
                 alt="professional"
               />
-            </div>
-            
-            {/* Subtle background glow to match image */}
-            <div className="absolute inset-0 bg-purple-100/30 blur-[100px] rounded-full -z-10" />
-          </div>
 
-          {/* 📋 Right Side (Features List) */}
-          <div className="flex flex-col gap-5 ">
+              <div className="absolute inset-0 bg-gradient-to-t from-black via-black/10 to-transparent" />
+            </motion.div>
+          </motion.div>
+
+          {/* ================= FEATURES ================= */}
+
+          <div className="flex flex-col gap-6">
+
             {features.map((feature, index) => (
-              <div 
+              <motion.div
                 key={index}
-                className={`
-                  group p-6 rounded-2xl border border-transparent transition-all duration-300 cursor-pointer
-                  
-                  ${feature.theme}
-                `}
+                initial={{
+                  opacity: 0,
+                  y: 40,
+                  filter: "blur(10px)",
+                }}
+                whileInView={{
+                  opacity: 1,
+                  y: 0,
+                  filter: "blur(0px)",
+                }}
+                viewport={{ once: true }}
+                transition={{
+                  duration: 0.9,
+                  delay: index * 0.12,
+                  ease: [0.22, 1, 0.36, 1],
+                }}
+                className="
+                  group
+                  relative
+                  overflow-hidden
+                  rounded-[2rem]
+                  border
+                  border-white/[0.08]
+                  bg-white/[0.03]
+                  backdrop-blur-2xl
+                  p-7
+                  transition-all
+                  duration-500
+                  hover:border-lime-400/20
+                  hover:bg-white/[0.04]
+                "
               >
-                <div className="flex items-start gap-5">
-                  <div className={`
-                    p-3 rounded-lg bg-white shadow-sm transition-transform duration-300 group-hover:scale-110 group-hover:rotate-3
-                    ${feature.iconColor}
-                  `}>
-                    <feature.icon className="w-5 h-5" />
+
+                {/* Hover Glow */}
+                <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition duration-700">
+                  <div className="absolute inset-0 bg-lime-400/[0.03]" />
+                </div>
+
+                {/* Shimmer */}
+                <motion.div
+                  animate={{
+                    x: ["-100%", "250%"],
+                  }}
+                  transition={{
+                    duration: 5,
+                    repeat: Infinity,
+                    ease: "linear",
+                    delay: index * 0.8,
+                  }}
+                  className="
+                    absolute
+                    top-0
+                    left-0
+                    h-full
+                    w-[40%]
+                    bg-gradient-to-r
+                    from-transparent
+                    via-white/[0.03]
+                    to-transparent
+                    skew-x-[-25deg]
+                  "
+                />
+
+                <div className="relative flex items-start gap-5 z-10">
+
+                  {/* Icon */}
+                  <div
+                    className="
+                      relative
+                      flex
+                      items-center
+                      justify-center
+                      w-14
+                      h-14
+                      rounded-2xl
+                      border
+                      border-white/[0.08]
+                      bg-black/40
+                      shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]
+                    "
+                  >
+                    <div className="absolute inset-0 rounded-2xl bg-gradient-to-b from-white/[0.06] to-transparent" />
+
+                    <feature.icon className="w-6 h-6 text-lime-300" />
                   </div>
+
+                  {/* Content */}
                   <div>
-                    <h3 className="text-md font-bold text-gray-800 mb-2">
+                    <h3 className="text-xl font-medium text-white mb-3 tracking-tight">
                       {feature.title}
                     </h3>
-                    <p className="text-md text-gray-600 leading-relaxed">
+
+                    <p className="text-white/45 leading-relaxed text-[15px]">
                       {feature.description}
                     </p>
                   </div>
                 </div>
-              </div>
+              </motion.div>
             ))}
           </div>
 
