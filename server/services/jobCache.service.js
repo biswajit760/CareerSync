@@ -187,6 +187,9 @@ class JobCacheService {
       // FIX: Uses the stack detected in job.service
       detectedStack: job.detectedStack || stack,
 
+      // EXPERIENCE REQUIREMENT
+      experienceRequired: job.experienceRequired || null,
+
       queryKey,
       cachedAt: new Date(),
       expiresAt: expiryTime,

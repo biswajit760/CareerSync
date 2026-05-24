@@ -28,24 +28,130 @@ const sleep = (ms) =>
 
 /**
  * =====================================================
- * SIMPLE QUERY OPTIMIZATION
+ * INTELLIGENT QUERY OPTIMIZATION
  * =====================================================
+ * Extracts 2-4 most important keywords from query
+ * Priority: Seniority > Tech Stack > Role > Specialization
  */
 
-function simplifyQuery(query) {
+function simplifyQuery(query, seniority) {
 
   if (!query) {
     return "software developer";
   }
 
   /**
-   * Adzuna India works BEST
-   * with short generic queries
+   * EXTRACT IMPORTANT KEYWORDS
    */
-  return query
-    .split(" ")
-    .slice(0, 2)
-    .join(" ");
+  const keywords = extractKeywords(query, seniority);
+
+  /**
+   * BUILD OPTIMIZED QUERY (2-4 words)
+   */
+  const optimized = keywords.slice(0, 4).join(" ");
+
+  /**
+   * FALLBACK: Ensure minimum quality
+   */
+  return optimized.length > 3 ? optimized : "software developer";
+}
+
+/**
+ * =====================================================
+ * KEYWORD EXTRACTION
+ * =====================================================
+ * Intelligently extracts important terms from query
+ */
+function extractKeywords(query, seniority) {
+
+  const words = query.toLowerCase().split(" ").filter(w => w.length > 1);
+  const important = [];
+
+  /**
+   * PRIORITY 1: SENIORITY
+   * Only include Senior/Lead/Principal (skip Fresher/Junior)
+   */
+  const seniorityTerms = ['senior', 'lead', 'principal', 'staff', 'chief'];
+  const hasSeniority = words.find(w => seniorityTerms.includes(w));
+  
+  if (hasSeniority) {
+    important.push(hasSeniority);
+  } else if (seniority && ['Senior', 'Lead', 'Principal'].includes(seniority)) {
+    important.push(seniority.toLowerCase());
+  }
+
+  /**
+   * PRIORITY 2: TECH STACK
+   * Preserve specific technologies
+   */
+  const techStacks = [
+    'mern', 'mean', 'lamp',
+    'react', 'reactjs', 'react.js',
+    'node', 'nodejs', 'node.js',
+    'angular', 'vue', 'svelte',
+    'python', 'django', 'flask',
+    'java', 'spring', 'springboot',
+    'php', 'laravel',
+    'dotnet', '.net', 'c#',
+    'golang', 'go', 'rust',
+    'next', 'nextjs', 'next.js',
+    'express', 'nestjs',
+  ];
+
+  const hasTech = words.find(w => techStacks.includes(w));
+  if (hasTech && !important.includes(hasTech)) {
+    important.push(hasTech);
+  }
+
+  /**
+   * PRIORITY 3: SPECIALIZATION
+   * Frontend, Backend, Full Stack, etc.
+   */
+  const specializations = [
+    'frontend', 'front-end',
+    'backend', 'back-end',
+    'fullstack', 'full-stack',
+    'full stack',  // Added: two-word phrase
+    'devops', 'sre',
+    'mobile', 'android', 'ios',
+    'data', 'ml', 'ai',
+  ];
+
+  // Check for multi-word specializations first
+  const queryLower = query.toLowerCase();
+  if (queryLower.includes('full stack') && important.length < 3) {
+    important.push('full');
+    important.push('stack');
+  } else {
+    const hasSpec = words.find(w => specializations.includes(w));
+    if (hasSpec && !important.includes(hasSpec) && important.length < 3) {
+      important.push(hasSpec);
+    }
+  }
+
+  /**
+   * PRIORITY 4: ROLE
+   * Developer, Engineer, Designer, etc.
+   */
+  const roles = [
+    'developer', 'engineer', 'programmer',
+    'designer', 'architect', 'analyst',
+    'manager', 'consultant', 'specialist',
+  ];
+
+  const hasRole = words.find(w => roles.includes(w));
+  if (hasRole && !important.includes(hasRole) && important.length < 4) {
+    important.push(hasRole);
+  }
+
+  /**
+   * FALLBACK: If no keywords extracted, use first 2-3 words
+   */
+  if (important.length === 0) {
+    return words.slice(0, 3);
+  }
+
+  return important;
 }
 
 /**
@@ -68,10 +174,10 @@ exports.fetchJobsFromAdzuna =
       try {
 
         const simplifiedQuery =
-          simplifyQuery(query);
+          simplifyQuery(query, seniority);
 
         console.log(
-          `📡 [Attempt ${attempt + 1}] Fetching jobs for: ${simplifiedQuery}`
+          `📡 [Attempt ${attempt + 1}] Fetching jobs for: "${simplifiedQuery}" (Original: "${query}")`
         );
 
         /**
@@ -244,6 +350,12 @@ function normalizeAdzunaJob(job) {
     }
 
     /**
+     * EXPERIENCE EXTRACTION
+     * Extract required experience from job description
+     */
+    const experienceRequired = extractExperienceRange(description);
+
+    /**
      * RETURN NORMALIZED OBJECT
      */
     return {
@@ -291,6 +403,13 @@ function normalizeAdzunaJob(job) {
 
       requirements: parseRequirements(description),
 
+      /**
+       * EXPERIENCE REQUIREMENT
+       * Extracted from job description
+       * Example: { min: 0, max: 2, type: 'range' }
+       */
+      experienceRequired,
+
       metadata: {
         provider: "adzuna",
         category: job.category?.label || "",
@@ -300,6 +419,103 @@ function normalizeAdzunaJob(job) {
     console.error("❌ Normalization failed:", error.message);
     return null;
   }
+}
+
+/**
+ * =====================================================
+ * EXPERIENCE RANGE EXTRACTION
+ * =====================================================
+ * Extracts experience requirements from job description
+ * Examples: "0-2 years", "3-5 years", "Freshers welcome"
+ */
+
+function extractExperienceRange(description) {
+  
+  if (!description) {
+    return null;
+  }
+
+  const text = description.toLowerCase();
+
+  /**
+   * PATTERN 1: Range format "X-Y years"
+   * Examples: "0-2 years", "3-5 years", "2-4 yrs", "3 to 5 years"
+   */
+  const rangeMatch = text.match(/(\d+)\s*(?:[-–—]|to)\s*(\d+)\s*(?:years?|yrs?)/i);
+  if (rangeMatch) {
+    return {
+      min: parseInt(rangeMatch[1]),
+      max: parseInt(rangeMatch[2]),
+      type: 'range'
+    };
+  }
+
+  /**
+   * PATTERN 2: Minimum format "X+ years" or "minimum X years"
+   * Examples: "5+ years", "minimum 3 years", "at least 2 years"
+   */
+  const minMatch = text.match(/(?:minimum|min|at\s*least|(\d+)\s*\+)\s*(\d+)?\s*(?:years?|yrs?)/i);
+  if (minMatch) {
+    const years = parseInt(minMatch[1] || minMatch[2]);
+    if (!isNaN(years)) {
+      return {
+        min: years,
+        max: years + 5,  // Assume +5 years range
+        type: 'minimum'
+      };
+    }
+  }
+
+  /**
+   * PATTERN 3: Exact years "X years"
+   * Examples: "2 years experience", "3 years required"
+   */
+  const exactMatch = text.match(/(?:^|\s)(\d+)\s*(?:years?|yrs?)\s*(?:of\s*)?(?:experience|exp)/i);
+  if (exactMatch) {
+    const years = parseInt(exactMatch[1]);
+    return {
+      min: Math.max(0, years - 1),
+      max: years + 1,
+      type: 'exact'
+    };
+  }
+
+  /**
+   * PATTERN 4: Experience level keywords
+   * Examples: "3+ years of experience", "5 years experience required"
+   */
+  const expLevelMatch = text.match(/(\d+)\s*(?:\+)?\s*(?:years?|yrs?)\s*(?:of\s*)?(?:experience|exp)(?:\s*required)?/i);
+  if (expLevelMatch) {
+    const years = parseInt(expLevelMatch[1]);
+    return {
+      min: years,
+      max: years + 3,
+      type: 'minimum'
+    };
+  }
+
+  /**
+   * PATTERN 5: Fresher-specific keywords
+   * Examples: "Freshers welcome", "Fresher", "0-1 year", "entry level"
+   */
+  if (
+    text.includes('fresher') ||
+    text.includes('fresh graduate') ||
+    text.includes('entry level') ||
+    text.includes('entry-level') ||
+    text.match(/0\s*(?:[-–—]|to)\s*1\s*(?:year|yr)/i)
+  ) {
+    return {
+      min: 0,
+      max: 1,
+      type: 'fresher'
+    };
+  }
+
+  /**
+   * NO EXPERIENCE REQUIREMENT FOUND
+   */
+  return null;
 }
 
 /**
@@ -320,33 +536,86 @@ function parseRequirements(
     description.toLowerCase();
 
   const skills = [
-
+    // Frontend Frameworks
     "react",
     "next.js",
+    "nextjs",
+    "vue",
+    "vue.js",
+    "angular",
+    "svelte",
+    
+    // Backend
     "node",
+    "node.js",
+    "nodejs",
     "express",
-    "mongodb",
-
+    "nestjs",
+    "fastapi",
+    "flask",
+    "django",
+    "spring",
+    "spring boot",
+    
+    // Languages
     "javascript",
     "typescript",
-
     "python",
-    "django",
-
     "java",
-    "spring",
-
-    "sql",
+    "rust",
+    "c++",
+    "golang",
+    "go",
+    "php",
+    "ruby",
+    "kotlin",
+    
+    // Databases
+    "mongodb",
     "postgresql",
-
-    "docker",
-    "aws",
-
-    "git",
+    "postgres",
+    "mysql",
+    "sql",
     "redis",
-
-    "html",
+    "elasticsearch",
+    "dynamodb",
+    
+    // GIS & Mapping (Specialized)
+    "arcgis",
+    "postgis",
+    "geoserver",
+    "qgis",
+    "mapbox",
+    "leaflet",
+    "openlayers",
+    "arcpy",
+    
+    // Cloud & DevOps
+    "docker",
+    "kubernetes",
+    "aws",
+    "azure",
+    "gcp",
+    "terraform",
+    "ansible",
+    "jenkins",
+    "ci/cd",
+    
+    // Tools & Others
+    "git",
+    "github",
+    "graphql",
+    "rest api",
+    "grpc",
+    "kafka",
+    "rabbitmq",
+    
+    // Frontend Tools
+    "tailwind",
     "css",
+    "html",
+    "webpack",
+    "vite",
   ];
 
   return skills.filter(skill =>

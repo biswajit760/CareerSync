@@ -235,22 +235,24 @@ class JobRankingEngine {
 
     /**
      * WEIGHTED SCORING
+     * Experience is now the DOMINANT factor (50%)
+     * This ensures freshers see 0-2 year jobs at the top
      */
     const weights = {
 
-      roleAlignment: 0.25,
+      experienceAlignment: 0.50,  // DOMINANT: Experience match (increased from 35%)
 
-      skillAlignment: 0.24,
+      roleAlignment: 0.18,
 
-      stackAffinity: 0.18,
+      skillAlignment: 0.15,
 
-      experienceAlignment: 0.12,
+      stackAffinity: 0.10,
 
-      seniorityAlignment: 0.10,
+      seniorityAlignment: 0.05,
 
-      growthPotential: 0.06,
+      growthPotential: 0.01,
 
-      freshness: 0.05,
+      freshness: 0.01,
     };
 
     let total = 0;
@@ -362,6 +364,8 @@ class JobRankingEngine {
    * ====================================================
    * SKILL ALIGNMENT
    * ====================================================
+   * FIXED: Now checks what % of JOB requirements the user meets
+   * (not what % of user skills match the job)
    */
   
   _scoreSkillAlignment(profile, job) {
@@ -376,39 +380,79 @@ class JobRankingEngine {
       })
       .filter(Boolean);
 
-    // 2. Identify what the job actually requires
-    // This is extracted from the description in job.service.js
+    // 2. Extract job requirements from description
+    const jobText = `${job.title} ${job.description}`.toLowerCase();
     const jobRequirements = job.requirements || [];
 
     // If the user has no skills, give a baseline exploratory score
     if (!userSkills.length) return 35;
 
-    // If the job didn't list specific requirements, provide a neutral passing score
-    if (jobRequirements.length === 0) return 75;
+    // If the job didn't list specific requirements, check general skill presence
+    if (jobRequirements.length === 0) {
+      // Fallback: Check if user's skills appear in job description
+      let generalMatches = 0;
+      userSkills.forEach(skill => {
+        if (jobText.includes(skill)) {
+          generalMatches++;
+        }
+      });
+      
+      if (generalMatches === 0) return 50;  // No clear match
+      if (generalMatches >= 3) return 80;   // Good general match
+      return 65;  // Some match
+    }
 
+    /**
+     * CRITICAL FIX: Calculate based on JOB requirements, not user skills
+     * Question: "What % of the JOB's requirements does this person fulfill?"
+     */
     let matchedCount = 0;
+    let criticalMissing = 0;
     
-    // Check how many of the JOB'S requirements the user meets
     jobRequirements.forEach(req => {
       const normalizedReq = req.toLowerCase();
       
-      // Check for direct match or alias match
-      if (userSkills.includes(normalizedReq) || this._skillExists(normalizedReq, userSkills.join(' '))) {
+      // Check if user has this skill
+      const hasSkill = userSkills.some(userSkill => 
+        userSkill.includes(normalizedReq) || 
+        normalizedReq.includes(userSkill) ||
+        this._skillExists(normalizedReq, userSkills.join(' '))
+      );
+      
+      if (hasSkill) {
         matchedCount++;
+      } else {
+        // Check if it's a critical/specialized skill
+        const criticalSkills = [
+          'arcgis', 'postgis', 'geoserver', 'qgis',  // GIS
+          'rust', 'c++', 'golang', 'kotlin',          // Specialized languages
+          'kubernetes', 'terraform', 'ansible',       // DevOps
+          'graphql', 'grpc', 'kafka',                 // Advanced backend
+        ];
+        
+        if (criticalSkills.some(cs => normalizedReq.includes(cs))) {
+          criticalMissing++;
+        }
       }
     });
 
     /**
-     * FIX: The "Efficiency Score"
-     * Logic: What % of the JOB requirements does this person fulfill?
-     * This ensures a MERN developer with 50 skills isn't "diluted" when 
-     * applying for a job that only needs React and Node.
+     * Calculate match percentage based on job requirements
      */
     const matchPercentage = (matchedCount / jobRequirements.length) * 100;
 
-    // Apply a realistic ceiling and floor
-    // Even with a 100% skill match, we leave room for other factors (experience, seniority)
-    return Math.round(Math.min(98, Math.max(0, matchPercentage)));
+    /**
+     * Apply penalty for missing critical skills
+     */
+    let finalScore = matchPercentage;
+    
+    if (criticalMissing > 0) {
+      // Penalize 15 points per critical missing skill
+      finalScore -= (criticalMissing * 15);
+    }
+
+    // Ensure score stays within bounds
+    return Math.round(Math.min(98, Math.max(20, finalScore)));
   }
 
   /**
@@ -472,25 +516,102 @@ class JobRankingEngine {
     const userExp =
       profile.yearsOfExperience || 0;
 
-    const jobText =
-      `${job.title} ${job.description}`
-        .toLowerCase();
+    /**
+     * USE PRE-EXTRACTED EXPERIENCE FROM JOB
+     */
+    const jobExp = job.experienceRequired;
 
-    const extracted =
-      this._extractExperience(jobText);
-
-    if (!extracted) {
-      return 70;
+    /**
+     * NO REQUIREMENT MENTIONED
+     * Give lower score for freshers (they should prefer jobs with clear 0-2 year requirements)
+     * Give higher score for experienced folks (they can apply to any job)
+     */
+    if (!jobExp) {
+      // Freshers (0-1 years): Prefer jobs with clear requirements
+      if (userExp <= 1) {
+        return 60;  // Lower score - unclear if suitable
+      }
+      // Experienced (2+ years): Can apply to most jobs
+      return 75;
     }
 
-    const diff =
-      Math.abs(userExp - extracted);
+    /**
+     * MATCH USER EXPERIENCE WITH JOB REQUIREMENT
+     */
+    return this._matchExperienceRange(userExp, jobExp);
+  }
 
-    if (diff === 0) return 100;
-    if (diff <= 1) return 90;
-    if (diff <= 2) return 80;
-    if (diff <= 4) return 65;
+  /**
+   * ====================================================
+   * EXPERIENCE RANGE MATCHING
+   * ====================================================
+   * Scores how well user experience matches job requirement
+   */
 
+  _matchExperienceRange(userYears, jobRequirement) {
+
+    const { min, max, type } = jobRequirement;
+
+    /**
+     * PERFECT MATCH
+     * User experience within job requirement range
+     */
+    if (userYears >= min && userYears <= max) {
+      return 100;  // ✅ Perfect fit
+    }
+
+    /**
+     * GROWTH OPPORTUNITY
+     * User slightly below minimum (stretch role)
+     */
+    if (userYears === min - 1) {
+      return 85;  // 🌱 Good stretch opportunity
+    }
+
+    if (userYears === min - 2) {
+      return 75;  // 🌱 Challenging but possible
+    }
+
+    /**
+     * OVERQUALIFIED (Acceptable)
+     * User slightly above maximum
+     */
+    if (userYears === max + 1) {
+      return 70;  // 📈 Slightly overqualified
+    }
+
+    if (userYears === max + 2) {
+      return 65;  // 📈 Overqualified but acceptable
+    }
+
+    /**
+     * TOO JUNIOR (Strong penalty for freshers)
+     * User significantly below minimum
+     */
+    if (userYears < min - 2) {
+      const gap = min - userYears;
+      
+      // Fresher (0 years) applying to 3+ year jobs
+      if (userYears <= 1 && min >= 3) {
+        return 25;  // ❌ Way too junior
+      }
+      
+      // General case: too junior
+      return Math.max(20, 40 - (gap * 5));  // ❌ Too junior
+    }
+
+    /**
+     * TOO SENIOR
+     * User significantly above maximum
+     */
+    if (userYears > max + 3) {
+      return 35;  // ❌ Significantly overqualified
+    }
+
+    /**
+     * MARGINAL FIT
+     * Edge cases
+     */
     return 50;
   }
 

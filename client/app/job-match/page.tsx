@@ -120,20 +120,35 @@ export default function JobMatchPage() {
         job.salaryMax / 100000 <=
           filters.maxSalary;
 
-      const seniority =
-        job.scoreBreakdown
-          ?.seniorityAlignment || 0;
-
       const matchesExperience =
         filters.experience === "all"
           ? true
-          : filters.experience === "fresher"
-          ? seniority < 30
-          : filters.experience === "junior"
-          ? seniority >= 30 && seniority < 60
-          : filters.experience === "mid"
-          ? seniority >= 60 && seniority < 85
-          : seniority >= 85;
+          : (() => {
+              // Use actual experience requirement from job
+              const expReq = job.experienceRequired;
+              
+              // If no experience data, show in all filters
+              if (!expReq) return true;
+              
+              const { min, max } = expReq;
+              
+              // Filter based on selected experience level
+              if (filters.experience === "fresher") {
+                // Fresher: 0-2 years
+                return min <= 1 && max <= 2;
+              } else if (filters.experience === "junior") {
+                // Junior: 1-3 years
+                return min >= 1 && max <= 3;
+              } else if (filters.experience === "mid") {
+                // Mid-Level: 3-5 years
+                return min >= 2 && max <= 5;
+              } else if (filters.experience === "senior") {
+                // Senior: 5+ years
+                return min >= 5;
+              }
+              
+              return true;
+            })();
 
       const matchesJobType =
         filters.jobType === "all" ||
