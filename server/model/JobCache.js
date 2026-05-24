@@ -74,6 +74,26 @@ const JobCacheSchema = new mongoose.Schema({
   },
 
   /**
+   * EXPERIENCE REQUIREMENT
+   * Extracted from job description
+   */
+  experienceRequired: {
+    min: {
+      type: Number,
+      default: null,
+    },
+    max: {
+      type: Number,
+      default: null,
+    },
+    type: {
+      type: String,
+      enum: ['range', 'minimum', 'exact', 'fresher', null],
+      default: null,
+    }
+  },
+
+  /**
    * SKILLS INTELLIGENCE
    */
   skills: [{

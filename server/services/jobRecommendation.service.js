@@ -34,36 +34,6 @@ class JobRecommendationService {
       java: ["spring", "backend"],
       mobile: ["android", "react-native"],
     };
-
-    /**
-     * ROLE EXPANSIONS
-     * Used for intelligent job fetching
-     */
-    this.roleExpansionMap = {
-      "frontend developer": [
-        "React Developer",
-        "Frontend Engineer",
-        "UI Developer"
-      ],
-
-      "backend developer": [
-        "Node.js Developer",
-        "Backend Engineer",
-        "API Developer"
-      ],
-
-      "full stack developer": [
-        "MERN Developer",
-        "Software Engineer",
-        "Full Stack Engineer"
-      ],
-
-      "software engineer": [
-        "Software Developer",
-        "Full Stack Developer",
-        "Application Developer"
-      ]
-    };
   }
 
   /**
@@ -121,12 +91,20 @@ class JobRecommendationService {
       this._diversifyJobs(rankedJobs);
 
     /**
+     * STEP 5.5
+     * FILTER BY EXPERIENCE (For Freshers)
+     * Remove jobs that require too much experience
+     */
+    const experienceFiltered = 
+      this._filterByExperience(diversified, context);
+
+    /**
      * STEP 6
      * ENRICH EXPLAINABILITY
      */
     const explained =
       this._addExplainability(
-        diversified,
+        experienceFiltered,
         context
       );
 
@@ -151,6 +129,44 @@ class JobRecommendationService {
         generatedQueries: queries,
       }
     };
+  }
+
+  /**
+   * =========================================================
+   * FILTER BY EXPERIENCE
+   * =========================================================
+   * For freshers (0-1 years), only show jobs with max 2 years requirement
+   */
+  
+  _filterByExperience(jobs, context) {
+    const userExp = context.profile.yearsOfExperience || 0;
+
+    // Only apply strict filtering for freshers (0-1 years)
+    if (userExp > 1) {
+      return jobs; // No filtering for experienced users
+    }
+
+    return jobs.filter(job => {
+      // Filter out Manager/Lead/Director roles for freshers
+      const title = (job.title || '').toLowerCase();
+      const seniorRoles = ['manager', 'lead', 'director', 'principal', 'head', 'chief', 'architect'];
+      
+      if (seniorRoles.some(role => title.includes(role))) {
+        return false; // Remove senior roles
+      }
+
+      // Keep jobs without experience requirement
+      if (!job.experienceRequired) {
+        return true;
+      }
+
+      const { min, max } = job.experienceRequired;
+
+      // For freshers: Only show jobs where:
+      // - min is 0 or 1 (entry level)
+      // - max is at most 2 years
+      return min <= 1 && max <= 2;
+    });
   }
 
   /**
@@ -318,43 +334,64 @@ class JobRecommendationService {
 
   /**
    * =========================================================
-   * QUERY GENERATION
+   * QUERY GENERATION (DYNAMIC - SKILL-BASED)
    * =========================================================
+   * Generates focused queries based on user's actual skills and stack
+   * Works for ANY role (not just hardcoded ones)
    */
 
   _generateQueries(context) {
 
-    const role =
-      context.careerIdentity.dominantRole
-        ?.toLowerCase()
-      || "software developer";
-
+    const profile = context.profile;
     const queries = new Set();
 
     /**
-     * PRIMARY ROLE
+     * QUERY 1: User's Primary Role
+     * Always include the exact role from resume
      */
-    queries.add(
-      context.careerIdentity.dominantRole
-    );
+    if (profile.primaryRole) {
+      queries.add(profile.primaryRole);
+    }
 
     /**
-     * ROLE EXPANSIONS
+     * QUERY 2: Stack-Based Query
+     * If user has a clear tech stack, search for it
+     * Examples: "MERN Developer", "Python Developer", "Java Developer"
      */
-    const expansions =
-      this.roleExpansionMap[role] || [];
-
-    expansions.forEach(q => queries.add(q));
+    if (profile.primaryStack && profile.primaryStack !== 'general') {
+      const stackQuery = `${profile.primaryStack} Developer`;
+      queries.add(stackQuery);
+    }
 
     /**
-     * EXPLORATION ROLES
+     * QUERY 3: Top Skill-Based Query
+     * Use user's strongest/primary skill
+     * Examples: "React Developer", "Node.js Developer", "Python Developer"
      */
-    context.careerIdentity
-      .explorationRoles
-      ?.forEach(role => queries.add(role));
+    if (profile.skills && profile.skills.length > 0) {
+      // Get first skill (most important)
+      const topSkill = profile.skills[0];
+      const skillName = typeof topSkill === 'string' 
+        ? topSkill 
+        : (topSkill.name || topSkill.displayName || topSkill.canonical);
+      
+      if (skillName) {
+        const skillQuery = `${skillName} Developer`;
+        queries.add(skillQuery);
+      }
+    }
 
-    return Array.from(queries)
-      .slice(0, 5);
+    /**
+     * FALLBACK: If no queries generated, use role-based fallback
+     */
+    if (queries.size === 0) {
+      queries.add("Software Developer");
+    }
+
+    /**
+     * LIMIT: Return max 3 focused queries
+     */
+    return Array.from(queries).slice(0, 3);
   }
 
   /**

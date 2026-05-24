@@ -17,3 +17,6 @@ client/out/
 *.log
 
 *.tsbuildinfo
+
+# Project notes (local documentation)
+notes/
