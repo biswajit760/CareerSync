@@ -45,14 +45,12 @@ export default function LoginPage() {
 
   const handleGoogleSuccess = async (credentialResponse: CredentialResponse) => {
     try {
-      // Decode JWT token from Google
       const token = credentialResponse.credential;
       if (!token) {
         setError('Failed to get Google credentials');
         return;
       }
 
-      // Decode the JWT to get user info
       const base64Url = token.split('.')[1];
       const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
       const jsonPayload = decodeURIComponent(
@@ -65,7 +63,7 @@ export default function LoginPage() {
       const payload = JSON.parse(jsonPayload);
 
       await googleLogin(
-        payload.sub, // Google ID
+        payload.sub,
         payload.email,
         payload.name,
         payload.picture
@@ -80,147 +78,245 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#F9FAFB] via-[#F3F4F6] to-[#E5E7EB] py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full">
-        {/* Card Container */}
-        <div className="bg-white rounded-2xl shadow-xl p-8 border border-[#E5E7EB]">
-          {/* Header */}
-          <div className="text-center mb-8">
-            <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-[#10B981] to-[#059669] rounded-2xl mb-4">
-              <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
-              </svg>
-            </div>
-            <h2 className="text-3xl font-bold text-[#080D0B] mb-2">
-              Welcome back
+    <div className="flex min-h-screen bg-[#050505] font-sans selection:bg-emerald-500/30 selection:text-emerald-200 overflow-hidden mt-8">
+      
+      {/* LEFT COLUMN: Authentication Flow */}
+      <div className="flex flex-col justify-center flex-1 px-4 py-12 sm:px-6 lg:flex-none lg:px-20 xl:px-28 z-10 relative bg-[#050505]">
+        
+        {/* Subtle mobile background glow */}
+        <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none lg:hidden">
+          <div className="absolute top-[-10%] left-[-10%] w-96 h-96 bg-emerald-500/10 blur-[100px] rounded-full" />
+        </div>
+
+        <div className="w-full max-w-sm mx-auto lg:w-[380px] relative">
+          
+         
+
+          <div className="mb-8">
+            <h2 className="text-2xl font-semibold tracking-tight text-white mb-2">
+              Log in to your account
             </h2>
-            <p className="text-[#4B5563]">
-              Sign in to continue to CareerSync
+            <p className="text-[14px] text-zinc-400">
+              Welcome back! Please enter your details.
             </p>
           </div>
 
-          {/* Form */}
           <form className="space-y-5" onSubmit={handleSubmit}>
             {error && (
-              <div className="rounded-xl bg-red-50 border border-red-200 p-4">
-                <div className="flex items-center gap-3">
-                  <svg className="w-5 h-5 text-red-600 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-                  </svg>
-                  <p className="text-sm text-red-800">{error}</p>
-                </div>
+              <div className="p-3 text-[13px] font-medium text-red-400 bg-red-400/10 border border-red-400/20 rounded-lg flex items-start gap-2">
+                <svg className="w-4 h-4 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+                {error}
               </div>
             )}
 
-            <div>
-              <label htmlFor="email" className="block text-sm font-semibold text-[#1F2937] mb-2">
-                Email Address
-              </label>
-              <input
-                id="email"
-                name="email"
-                type="email"
-                required
-                value={formData.email}
-                onChange={handleChange}
-                className="appearance-none relative block w-full px-4 py-3 border border-[#E5E7EB] placeholder-[#9CA3AF] text-[#080D0B] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#10B981] focus:border-transparent transition-all duration-200 bg-[#F9FAFB]"
-                placeholder="john@example.com"
-              />
-            </div>
-
-            <div>
-              <label htmlFor="password" className="block text-sm font-semibold text-[#1F2937] mb-2">
-                Password
-              </label>
-              <input
-                id="password"
-                name="password"
-                type="password"
-                required
-                value={formData.password}
-                onChange={handleChange}
-                className="appearance-none relative block w-full px-4 py-3 border border-[#E5E7EB] placeholder-[#9CA3AF] text-[#080D0B] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#10B981] focus:border-transparent transition-all duration-200 bg-[#F9FAFB]"
-                placeholder="Enter your password"
-              />
-            </div>
-
-            <div className="flex items-center justify-between text-sm">
-              <div className="flex items-center">
-                <input
-                  id="remember-me"
-                  name="remember-me"
-                  type="checkbox"
-                  className="h-4 w-4 text-[#10B981] focus:ring-[#10B981] border-[#E5E7EB] rounded"
-                />
-                <label htmlFor="remember-me" className="ml-2 block text-[#4B5563]">
-                  Remember me
+            <div className="space-y-4">
+              {/* Email */}
+              <div className="space-y-2">
+                <label htmlFor="email" className="block text-[13px] font-medium text-zinc-300">
+                  Email
                 </label>
+                <input
+                  id="email"
+                  name="email"
+                  type="email"
+                  required
+                  value={formData.email}
+                  onChange={handleChange}
+                  className="block w-full px-3 py-2.5 bg-[#09090b] border border-zinc-800 rounded-lg text-white placeholder-zinc-600 focus:outline-none focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/50 transition-colors text-[14px] shadow-sm"
+                  placeholder="Enter your email"
+                />
               </div>
 
-              <a href="#" className="font-medium text-[#059669] hover:text-[#047857] transition-colors">
-                Forgot password?
-              </a>
+              {/* Password */}
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <label htmlFor="password" className="block text-[13px] font-medium text-zinc-300">
+                    Password
+                  </label>
+                  <a href="#" className="text-[12px] font-medium text-zinc-400 hover:text-white transition-colors">
+                    Forgot password?
+                  </a>
+                </div>
+                <input
+                  id="password"
+                  name="password"
+                  type="password"
+                  required
+                  value={formData.password}
+                  onChange={handleChange}
+                  className="block w-full px-3 py-2.5 bg-[#09090b] border border-zinc-800 rounded-lg text-white placeholder-zinc-600 focus:outline-none focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/50 transition-colors text-[14px] shadow-sm tracking-widest"
+                  placeholder="••••••••"
+                />
+              </div>
             </div>
 
+            {/* Remember Me */}
+            <div className="flex items-center py-1">
+              <input
+                id="remember-me"
+                name="remember-me"
+                type="checkbox"
+                className="h-4 w-4 rounded bg-[#09090b] border-zinc-800 text-emerald-500 focus:ring-emerald-500/30 focus:ring-offset-0 cursor-pointer transition-colors"
+              />
+              <label htmlFor="remember-me" className="ml-2 block text-[13px] text-zinc-400 cursor-pointer select-none hover:text-zinc-300 transition-colors">
+                Remember for 30 days
+              </label>
+            </div>
+
+            {/* Primary Action */}
             <button
               type="submit"
               disabled={loading}
-              className="group relative w-full flex justify-center items-center gap-2 py-3 px-4 border border-transparent text-sm font-semibold rounded-xl text-white bg-gradient-to-r from-[#10B981] to-[#059669] hover:from-[#059669] hover:to-[#047857] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#10B981] disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 shadow-lg shadow-emerald-500/30"
+              className="w-full h-10 flex justify-center items-center gap-2 bg-white hover:bg-zinc-100 text-zinc-950 text-[14px] font-semibold rounded-lg focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[#050505] focus:ring-white disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 active:scale-[0.98]"
             >
               {loading ? (
-                <>
-                  <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                  </svg>
-                  Signing in...
-                </>
-              ) : (
-                <>
-                  Sign in
-                  <svg className="w-5 h-5 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
-                  </svg>
-                </>
-              )}
+                <svg className="animate-spin h-4 w-4 text-zinc-950" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+              ) : 'Sign in'}
             </button>
           </form>
 
           {/* Divider */}
-          <div className="relative my-6">
+          <div className="relative my-8">
             <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-[#E5E7EB]" />
+              <div className="w-full border-t border-zinc-800" />
             </div>
-            <div className="relative flex justify-center text-sm">
-              <span className="px-4 bg-white text-[#9CA3AF] font-medium">Or continue with</span>
+            <div className="relative flex justify-center text-[11px] uppercase tracking-wider font-medium">
+              <span className="px-3 bg-[#050505] text-zinc-500">Or continue with</span>
             </div>
           </div>
 
-          {/* Google Sign In Button */}
-          <div className="flex justify-center">
+          {/* Social Auth */}
+          <div className="flex justify-center [&>div]:w-full [&>div]:max-w-full">
             <GoogleLogin
               onSuccess={handleGoogleSuccess}
               onError={handleGoogleError}
-              theme="outline"
+              theme="filled_black"
               size="large"
               text="continue_with"
               shape="rectangular"
+              width="380"
             />
           </div>
 
-          {/* Sign Up Link */}
-          <p className="mt-6 text-center text-sm text-[#4B5563]">
+          <p className="mt-8 text-center text-[13px] text-zinc-400">
             Don&apos;t have an account?{' '}
-            <Link href="/register" className="font-semibold text-[#059669] hover:text-[#047857] transition-colors">
-              Create one now
+            <Link href="/register" className="font-medium text-white hover:text-emerald-400 transition-colors">
+              Sign up
             </Link>
           </p>
         </div>
+      </div>
 
-        {/* Footer */}
-        <p className="mt-6 text-center text-xs text-[#9CA3AF]">
-          By signing in, you agree to our Terms of Service and Privacy Policy
-        </p>
+      {/* RIGHT COLUMN: Brand/Visual Showcase */}
+      <div className="relative hidden w-0 flex-1 lg:block overflow-hidden border-l border-zinc-800/50 bg-[#09090b]">
+        {/* Architectural Grid Background */}
+        <div className="absolute inset-0 bg-[linear-gradient(to_right,#ffffff05_1px,transparent_1px),linear-gradient(to_bottom,#ffffff05_1px,transparent_1px)] bg-[size:32px_32px]" />
+        
+        {/* Abstract Light Orbs */}
+        <div className="absolute top-[-10%] right-[-5%] w-[800px] h-[800px] bg-emerald-500/10 blur-[120px] rounded-full pointer-events-none" />
+        <div className="absolute bottom-[-20%] left-[-10%] w-[600px] h-[600px] bg-lime-500/10 blur-[100px] rounded-full pointer-events-none" />
+
+        {/* Floating UI Elements / Mockups */}
+        <div className="absolute inset-0 flex items-center justify-center p-12 perspective-1000">
+          <div className="relative w-full max-w-[420px] aspect-square transform transition-transform duration-700 hover:scale-[1.02]">
+            
+            {/* Main glass card - Dashboard Widget Mockup */}
+            <div className="absolute inset-0 bg-[#0A0A0A]/90 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl flex flex-col p-6 overflow-hidden transform rotate-[-2deg] transition-all duration-500 hover:rotate-0 hover:border-emerald-500/30">
+              
+              {/* Fake Window Controls */}
+              <div className="w-full flex justify-between items-center mb-6">
+                <div className="flex gap-1.5">
+                  <div className="w-2.5 h-2.5 rounded-full bg-zinc-700" />
+                  <div className="w-2.5 h-2.5 rounded-full bg-zinc-700" />
+                  <div className="w-2.5 h-2.5 rounded-full bg-zinc-700" />
+                </div>
+                <div className="text-[10px] text-zinc-500 font-mono tracking-wider">app.careersync.io/report</div>
+              </div>
+              
+              {/* Profile Match Section */}
+              <div className="flex items-center gap-5 mb-8">
+                {/* Score Circle */}
+                <div className="relative w-16 h-16 rounded-full border-4 border-zinc-800 flex items-center justify-center">
+                  <svg className="absolute inset-0 w-full h-full -rotate-90 drop-shadow-[0_0_8px_rgba(16,185,129,0.5)]" viewBox="0 0 36 36">
+                    <path 
+                      className="text-emerald-500" 
+                      strokeDasharray="92, 100" 
+                      d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" 
+                      fill="none" 
+                      stroke="currentColor" 
+                      strokeWidth="3.5" 
+                      strokeLinecap="round" 
+                    />
+                  </svg>
+                  <span className="text-lg font-bold text-white relative z-10">92<span className="text-[10px] text-zinc-400">%</span></span>
+                </div>
+                
+                <div>
+                  <h3 className="text-white font-medium text-lg tracking-tight">Senior React Dev</h3>
+                  <p className="text-emerald-400 text-sm flex items-center gap-1.5 mt-0.5">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    Excellent Match
+                  </p>
+                </div>
+              </div>
+
+              {/* Progress Bars / Stats */}
+              <div className="space-y-5 flex-1">
+                {/* Stat 1 */}
+                <div>
+                  <div className="flex justify-between text-[12px] mb-2">
+                    <span className="text-zinc-400 font-medium">Keywords Identified</span>
+                    <span className="text-white font-mono">24/28</span>
+                  </div>
+                  <div className="h-1.5 w-full bg-zinc-800 rounded-full overflow-hidden">
+                    <div className="h-full bg-emerald-500 w-[85%] rounded-full shadow-[0_0_10px_rgba(16,185,129,0.5)]" />
+                  </div>
+                </div>
+
+                {/* Stat 2 */}
+                <div>
+                  <div className="flex justify-between text-[12px] mb-2">
+                    <span className="text-zinc-400 font-medium">Experience Match</span>
+                    <span className="text-white font-mono">100%</span>
+                  </div>
+                  <div className="h-1.5 w-full bg-zinc-800 rounded-full overflow-hidden">
+                    <div className="h-full bg-lime-400 w-full rounded-full shadow-[0_0_10px_rgba(163,230,53,0.5)]" />
+                  </div>
+                </div>
+                
+                {/* Skill Badges */}
+                <div className="pt-2 flex flex-wrap gap-2">
+                  <span className="px-2.5 py-1 rounded-md bg-emerald-500/10 border border-emerald-500/20 text-emerald-300 text-[11px] font-semibold tracking-wide">React.js</span>
+                  <span className="px-2.5 py-1 rounded-md bg-emerald-500/10 border border-emerald-500/20 text-emerald-300 text-[11px] font-semibold tracking-wide">TypeScript</span>
+                  <span className="px-2.5 py-1 rounded-md bg-zinc-800 border border-zinc-700 text-zinc-300 text-[11px] font-semibold tracking-wide">GraphQL</span>
+                  <span className="px-2.5 py-1 rounded-md bg-zinc-800 border border-zinc-700 text-zinc-300 text-[11px] font-semibold tracking-wide">Node.js</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Decorative overlapping card - Notification Toast */}
+            <div className="absolute -bottom-8 -right-8 w-80 bg-[#111111] border border-zinc-800 rounded-2xl shadow-[0_20px_40px_-15px_rgba(0,0,0,0.8)] p-4 flex gap-4 items-start z-10 transition-transform duration-500 hover:-translate-y-2 hover:border-emerald-500/50">
+              <div className="h-10 w-10 bg-gradient-to-br from-emerald-400 to-emerald-600 rounded-full flex items-center justify-center flex-shrink-0 shadow-[0_0_15px_rgba(16,185,129,0.3)] mt-0.5">
+                <svg className="w-5 h-5 text-zinc-950" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+                </svg>
+              </div>
+              <div>
+                <p className="text-white text-[14px] font-semibold mb-0.5">Resume Analyzed</p>
+                <p className="text-zinc-400 text-[13px] leading-relaxed">Your profile has been updated and matched with 12 new premium jobs.</p>
+                <p className="text-emerald-500 text-[10px] uppercase tracking-wider font-bold mt-2">Just now</p>
+              </div>
+            </div>
+
+          </div>
+        </div>
       </div>
     </div>
   );

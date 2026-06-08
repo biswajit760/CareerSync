@@ -258,9 +258,9 @@ export default function JobMatchPage() {
 
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(163,230,53,0.08),transparent_35%)]" />
 
-      <div className="absolute left-[-10%] top-[10%] w-[600px] h-[600px] bg-lime-400/10 blur-[160px] rounded-full pointer-events-none" />
+      <div className="absolute left-[-10%] top-[10%] w-44 sm:w-80 md:w-[400px] lg:w-[600px] h-44 sm:h-80 md:h-[400px] lg:h-[600px] bg-lime-400/10 blur-[160px] rounded-full pointer-events-none" />
 
-      <div className="absolute right-[-10%] bottom-[0%] w-[600px] h-[600px] bg-lime-400/10 blur-[160px] rounded-full pointer-events-none" />
+      <div className="absolute right-[-10%] bottom-[0%] w-44 sm:w-80 md:w-[400px] lg:w-[600px] h-44 sm:h-80 md:h-[400px] lg:h-[600px] bg-lime-400/10 blur-[160px] rounded-full pointer-events-none" />
 
       <div
         className="
@@ -292,7 +292,7 @@ export default function JobMatchPage() {
           mt-16
         "
       >
-        <div className="max-w-full mx-auto px-4 sm:px-6 py-10">
+        <div className="max-w-[1700px] mx-auto px-4 sm:px-6 py-10">
 
           {/* ================================================= */}
           {/* HERO */}
@@ -397,16 +397,16 @@ export default function JobMatchPage() {
 
   <div
     className="
-      relative
-      grid
-      grid-cols-1
-      xl:grid-cols-[auto_1fr]
-      gap-6
-      p-5
-      items-center
-     -z-10
-     rounded-[2.5rem]
-    "
+    relative
+    grid
+    grid-cols-1
+    2xl:grid-cols-[auto_1fr]
+    gap-5
+    p-4
+    sm:p-5
+    items-start
+    rounded-[2.5rem]
+  "
   >
 
     {/* ================================================= */}
@@ -414,12 +414,14 @@ export default function JobMatchPage() {
     {/* ================================================= */}
 
     <div
-      className="
-        flex
-        items-center
-        gap-4
-        flex-nowrap
-      "
+       className="
+    grid
+    grid-cols-1
+    sm:grid-cols-2
+    lg:grid-cols-3
+    gap-4
+    w-full
+  "
     >
 
       {/* ================================================= */}
@@ -437,8 +439,8 @@ export default function JobMatchPage() {
           border
           border-white/[0.05]
           bg-black/20
-          min-w-[200px]
-          h-[110px]
+          w-full
+min-h-[110px]
           relative
           overflow-hidden
         "
@@ -522,8 +524,8 @@ export default function JobMatchPage() {
           border
           border-white/[0.05]
           bg-black/20
-          min-w-[200px]
-          h-[110px]
+          w-full
+min-h-[110px]
           relative
           overflow-hidden
         "
@@ -576,8 +578,8 @@ export default function JobMatchPage() {
           border
           border-white/[0.05]
           bg-black/20
-          min-w-[200px]
-          h-[110px]
+         w-full
+min-h-[110px]
           relative
           overflow-hidden
         "
@@ -643,13 +645,14 @@ export default function JobMatchPage() {
     {/* ================================================= */}
 
     <div
-      className="
-        flex
-        items-center
-        gap-4
-        w-full
-        min-w-0
-      "
+       className="
+    flex
+    flex-wrap
+    xl:flex-nowrap
+    items-center
+    gap-4
+    w-full
+  "
     >
 
       {/* ================================================= */}
@@ -661,8 +664,9 @@ export default function JobMatchPage() {
           relative
           flex
           items-center
-          flex-[1.2]
-          min-w-[320px]
+          flex-1
+min-w-[260px]
+lg:min-w-[320px]
           h-[72px]
           rounded-[1.8rem]
           border
@@ -728,7 +732,9 @@ export default function JobMatchPage() {
       <div
         className="
           relative
-          min-w-[220px]
+          w-full
+sm:w-auto
+sm:min-w-[220px]
         "
       >
         <select
