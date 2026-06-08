@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import Button from "../ui/Button";
 import {
   ArrowRight,
@@ -10,11 +11,12 @@ import {
   Brain,
   BarChart,
   Briefcase,
+  LayoutDashboard,
 } from "lucide-react";
 
 export default function HeroSection() {
   return (
-    <section className="relative w-full min-h-screen py-24 md:py-36 overflow-hidden bg-[#010401] text-white antialiased flex flex-col justify-center items-center">
+    <section className="relative w-full min-h-screen py-20 md:py-30 overflow-hidden bg-[#010401] text-white antialiased flex flex-col justify-center items-center">
 
       {/* ===== TRUE ATMOSPHERIC CINEMATIC BACKGROUND ===== */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none z-0">
@@ -155,83 +157,83 @@ export default function HeroSection() {
         />
 
         {/* ===== ATMOSPHERIC MOVING SMOKE LAYER 1 ===== */}
-<div
-  className="
-    absolute
-    -top-[20%]
-    left-[-10%]
-    w-[70vw]
-    h-[70vw]
-    rounded-full
-    opacity-30
-    animate-[floatSmoke1_18s_ease-in-out_infinite]
-    blur-[120px]
-    z-20
-  "
-  style={{
-    background: `
-      radial-gradient(
-        circle,
-        rgba(163,230,53,0.22) 0%,
-        rgba(163,230,53,0.10) 35%,
-        rgba(163,230,53,0.04) 55%,
-        transparent 75%
-      )
-    `,
-  }}
-/>
+        <div
+          className="
+            absolute
+            -top-[20%]
+            left-[-10%]
+            w-[70vw]
+            h-[70vw]
+            rounded-full
+            opacity-30
+            animate-[floatSmoke1_18s_ease-in-out_infinite]
+            blur-[120px]
+            z-20
+          "
+          style={{
+            background: `
+              radial-gradient(
+                circle,
+                rgba(163,230,53,0.22) 0%,
+                rgba(163,230,53,0.10) 35%,
+                rgba(163,230,53,0.04) 55%,
+                transparent 75%
+              )
+            `,
+          }}
+        />
 
-{/* ===== ATMOSPHERIC MOVING SMOKE LAYER 2 ===== */}
-<div
-  className="
-    absolute
-    top-[-15%]
-    right-[-15%]
-    w-[65vw]
-    h-[65vw]
-    rounded-full
-    opacity-20
-    animate-[floatSmoke2_22s_ease-in-out_infinite]
-    blur-[140px]
-    z-20
-  "
-  style={{
-    background: `
-      radial-gradient(
-        circle,
-        rgba(190,255,0,0.18) 0%,
-        rgba(163,230,53,0.08) 40%,
-        transparent 75%
-      )
-    `,
-  }}
-/>
+        {/* ===== ATMOSPHERIC MOVING SMOKE LAYER 2 ===== */}
+        <div
+          className="
+            absolute
+            top-[-15%]
+            right-[-15%]
+            w-[65vw]
+            h-[65vw]
+            rounded-full
+            opacity-20
+            animate-[floatSmoke2_22s_ease-in-out_infinite]
+            blur-[140px]
+            z-20
+          "
+          style={{
+            background: `
+              radial-gradient(
+                circle,
+                rgba(190,255,0,0.18) 0%,
+                rgba(163,230,53,0.08) 40%,
+                transparent 75%
+              )
+            `,
+          }}
+        />
 
-{/* ===== CENTER FOG ATMOSPHERE ===== */}
-<div
-  className="
-    absolute
-    top-[5%]
-    left-1/2
-    -translate-x-1/2
-    w-[80vw]
-    h-[40vw]
-    opacity-10
-    blur-[120px]
-    animate-[floatSmoke3_26s_ease-in-out_infinite]
-    z-20
-  "
-  style={{
-    background: `
-      radial-gradient(
-        ellipse,
-        rgba(210,255,120,0.16) 0%,
-        rgba(163,230,53,0.06) 45%,
-        transparent 80%
-      )
-    `,
-  }}
-/>
+        {/* ===== CENTER FOG ATMOSPHERE ===== */}
+        <div
+          className="
+            absolute
+            top-[5%]
+            left-1/2
+            -translate-x-1/2
+            w-[80vw]
+            h-[40vw]
+            opacity-10
+            blur-[120px]
+            animate-[floatSmoke3_26s_ease-in-out_infinite]
+            z-20
+          "
+          style={{
+            background: `
+              radial-gradient(
+                ellipse,
+                rgba(210,255,120,0.16) 0%,
+                rgba(163,230,53,0.06) 45%,
+                transparent 80%
+              )
+            `,
+          }}
+        />
 
         {/* Layer 5: Cinematic Vignette */}
         <div
@@ -279,7 +281,7 @@ export default function HeroSection() {
       <div className="max-w-6xl mx-auto px-6 relative z-10 text-center flex flex-col items-center">
 
         {/* Social Proof */}
-        <div className="inline-flex items-center justify-center gap-4 bg-white/[0.02] border border-white/[0.06] backdrop-blur-md px-4 py-2 rounded-full mb-10 shadow-inner z-10">
+        <div className="inline-flex items-center justify-center gap-4 bg-white/[0.02] border border-white/[0.06] backdrop-blur-md px-4 py-2 rounded-full mb-12 shadow-inner z-10">
 
           {/* Avatars */}
           <div className="flex -space-x-2.5">
@@ -318,144 +320,113 @@ export default function HeroSection() {
         </div>
 
         {/* ===== HERO HEADING ===== */}
-<div className="max-w-5xl mx-auto text-center font-medium">
+        <div className="max-w-4xl mx-auto text-center font-medium">
+          <h1 className="text-[42px] sm:text-[56px] md:text-[74px] leading-[1.1] font-[500] text-white tracking-tight mb-5 mt-2">
+            Land Your Dream Role
+            <br />
+            <span className="relative inline-block mt-1 sm:mt-2">
+              {/* Gradient Text */}
+              <span className="bg-gradient-to-b from-[#ffffff] via-[#d9ff8c] to-[#A3E635] bg-clip-text text-transparent">
+                With AI-Precision Matching.
+              </span>
+              {/* Glow Behind Text (Tamed Opacity) */}
+              <span className="absolute inset-0 blur-3xl opacity-15 bg-[#A3E635] -z-10" />
+            </span>
+          </h1>
 
-  <h1 className="text-[42px] sm:text-[56px] md:text-[65px] leading-[1] font-[500]  text-white">
-    
-    Accelerate Your Career With
-    
-    <br />
-
-    <span className="relative inline-block mt-3">
-      
-      {/* Gradient Text */}
-      <span className="bg-gradient-to-b from-[#ffffff] via-[#d9ff8c] to-[#A3E635] bg-clip-text text-transparent">
-        AI-Powered Job Intelligence
-      </span>
-
-      {/* Glow Behind Text */}
-      <span className="absolute inset-0 blur-3xl opacity-20 bg-[#A3E635] -z-10" />
-    </span>
-  </h1>
-
-  {/* ===== PARAGRAPH ===== */}
-  <p className="mt-8 max-w-2xl mx-auto text-[15px] sm:text-[17px] leading-[1.8] text-[#b5b5b5] font-[400] tracking-[-0.01em]">
-    Optimize your resume, discover missing technical skills, and unlock
-    high-quality opportunities using advanced AI-driven career analysis
-    and intelligent job matching systems.
-  </p>
-</div>
+          {/* ===== PARAGRAPH ===== */}
+          <p className="max-w-2xl mx-auto text-[24px] sm:text-[18px] leading-[1.7] text-[#a1a1aa] font-[400] mb-14">
+            Bypass the ATS black hole. Get instant resume feedback, intelligent keyword optimization, and curated opportunities tailored exactly to your skillset.
+          </p>
+        </div>
 
         {/* ===== HERO CTA BUTTONS ===== */}
-<div className="mt-12 flex items-center justify-center gap-4 flex-wrap">
+        <div className="flex items-center justify-center gap-6 flex-wrap mt-4">
 
-  {/* Primary CTA */}
-  <button
-    className="
-      group
-      relative
-      flex
-      items-center
-      gap-5
-      pl-7
-      pr-2
-      py-2
-      rounded-full
-      bg-white
-      text-black
-      transition-all
-      duration-300
-      hover:scale-[1.015]
-      hover:shadow-[0_0_40px_rgba(163,230,53,0.16)]
-    "
-  >
-    {/* Text */}
-    <span className="text-[15px] font-[600] tracking-[-0.02em]">
-      Get Started
-    </span>
+          {/* Primary CTA */}
+          <Link href="/analyze-resume">
+            <button className="
+              group
+              relative
+              flex
+              items-center
+              gap-5
+              pl-7
+              pr-2
+              py-2
+              rounded-full
+              bg-white
+              text-black
+              transition-all
+              duration-300
+              hover:scale-[1.015]
+              hover:shadow-[0_0_40px_rgba(163,230,53,0.16)]
+              cursor-pointer
+            ">
+              <span className="text-[15px] font-[600] tracking-[-0.02em]">
+                Upload Resume
+              </span>
 
-    {/* Arrow Circle */}
-    <div
-      className="
-        w-11
-        h-11
-        rounded-full
-        bg-[#A3E635]
-        flex
-        items-center
-        justify-center
-        transition-all
-        duration-300
-        group-hover:-rotate-45
-        cursor-pointer
-      "
-    >
-      <ArrowRight className="w-4 h-4 text-black stroke-[2.5]" />
-    </div>
+              <div className="
+                w-11
+                h-11
+                rounded-full
+                bg-[#A3E635]
+                flex
+                items-center
+                justify-center
+                transition-all
+                duration-300
+                group-hover:-rotate-45
+              ">
+                <ArrowRight className="w-4 h-4 text-black stroke-[2.5]" />
+              </div>
+            </button>
+          </Link>
 
-    {/* Soft Glow */}
-    <div
-      className="
-        absolute
-        inset-0
-        rounded-full
-        opacity-0
-        group-hover:opacity-100
-        transition-opacity
-        duration-500
-        blur-2xl
-        bg-[#A3E635]/10
-        -z-10
-      "
-    />
-  </button>
+          {/* Secondary CTA */}
+          <Link href="/dashboard">
+            <button className="
+              group
+              flex
+              items-center
+              gap-4
+              px-6
+              py-[13px]
+              rounded-full
+              border
+              border-white/10
+              bg-white/[0.03]
+              backdrop-blur-xl
+              text-white
+              transition-all
+              duration-300
+              hover:bg-white/[0.06]
+              hover:border-white/20
+              cursor-pointer
+            ">
+              <div className="
+                w-9
+                h-9
+                rounded-full
+                bg-white/[0.06]
+                flex
+                items-center
+                justify-center
+                transition-all
+                duration-300
+                group-hover:bg-[#A3E635]
+              ">
+                <LayoutDashboard className="w-4 h-4 text-white group-hover:text-black" />
+              </div>
 
-  {/* Secondary CTA */}
-  <button
-    className="
-      group
-      flex
-      items-center
-      gap-4
-      px-6
-      py-[13px]
-      rounded-full
-      border
-      border-white/10
-      bg-white/[0.03]
-      backdrop-blur-xl
-      text-white
-      transition-all
-      duration-300
-      hover:bg-white/[0.06]
-      hover:border-white/20
-      cursor-pointer
-    "
-  >
-    {/* Play Icon */}
-    <div
-      className="
-        w-9
-        h-9
-        rounded-full
-        bg-white/[0.06]
-        flex
-        items-center
-        justify-center
-        transition-all
-        duration-300
-        group-hover:bg-[#A3E635]
-      "
-    >
-      <Play className="w-3.5 h-3.5  text-white group-hover:text-black fill-current" />
-    </div>
+              <span className="text-[15px] font-[500] tracking-[-0.02em]">
+                View Dashboard
+              </span>
+            </button>
+          </Link>
 
-    {/* Text */}
-    <span className="text-[15px] font-[500] tracking-[-0.02em]">
-      Watch Demo
-    </span>
-  </button>
-</div>
+        </div>
 
         {/* Product Flow */}
         <div className="mt-24 w-full max-w-5xl mx-auto">

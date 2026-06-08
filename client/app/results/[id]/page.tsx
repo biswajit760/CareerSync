@@ -110,9 +110,9 @@ export default function ATSReportPage() {
 
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(163,230,53,0.08),transparent_35%)]" />
 
-      <div className="absolute top-[-10%] left-[-10%] w-[700px] h-[700px] bg-lime-400/10 blur-[180px] rounded-full pointer-events-none" />
+      <div className="absolute top-[-10%] left-[-10%] w-44 sm:w-80 md:w-[420px] lg:w-[700px] h-44 sm:h-80 md:h-[420px] lg:h-[700px] bg-lime-400/10 blur-[180px] rounded-full pointer-events-none" />
 
-      <div className="absolute bottom-[-20%] right-[-10%] w-[700px] h-[700px] bg-lime-400/5 blur-[180px] rounded-full pointer-events-none" />
+      <div className="absolute bottom-[-20%] right-[-10%] w-44 sm:w-80 md:w-[420px] lg:w-[700px] h-44 sm:h-80 md:h-[420px] lg:h-[700px] bg-lime-400/5 blur-[180px] rounded-full pointer-events-none" />
 
       <div
         className="absolute inset-0 opacity-[0.02]"

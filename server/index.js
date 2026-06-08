@@ -50,7 +50,9 @@ app.use("/api/resume", resumeRoutes);
 const jobRoutes = require("./routes/job.routes");
 app.use("/api/jobs", jobRoutes);
 
-
+// 📈 DASHBOARD (Real-time analytics & insights)
+const dashboardRoutes = require("./routes/dashboard.routes");
+app.use("/api/dashboard", dashboardRoutes);
 
 app.get("/test-error", (req, res, next) => {
   next(new AppError("Test error working", 400));
@@ -63,6 +65,11 @@ app.use((req, res) => {
   res.status(404).json({ success: false, message: "Route not found" });
 });
 
+// ✅ GLOBAL ERROR HANDLER MIDDLEWARE (MUST BE LAST)
+const errorHandler = require("./middleware/errorHandler");
+const AppError = require("./utils/AppError");
+app.use(errorHandler);
+
 // ================= SERVER =================
 
 const PORT = process.env.PORT || 5000;
@@ -72,9 +79,3 @@ const HOST = '0.0.0.0';
 app.listen(PORT, HOST, () => {
   console.log(`🚀 Server running on port ${PORT}`);
 });
-
-
-
-const errorHandler = require("./middleware/errorHandler");
-const AppError = require("./utils/AppError");
-app.use(errorHandler);
